@@ -1,44 +1,45 @@
+(exec-path-from-shell-initialize)
+(setq shell-command-switch "-c")
 (require 'package)
+(require 'use-package)
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
 (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/") t)
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
 (add-to-list 'package-archives '("ELPA" . "http://tromey.com/elpa/") t)
 
 (setq backup-directory-alist `(("." . "~/.saves")))
+(setq auto-save-file-name-transforms `((".*" "~/.emacs-saves/" t)))
 
 (require 'company)
 (global-company-mode)
-(setq company-transformers '(company-sort-by-backend-importance))
-(setq company-idle-delay 0)
-(setq company-minimum-prefix-length 3)
-(setq company-selection-wrap-around t)
-(setq completion-ignore-case t)
-(setq company-dabbrev-downcase nil)
-(global-set-key (kbd "C-M-i") 'company-complete)
+(define-key company-active-map (kbd "C-f") 'company-complete-selection)
 (define-key company-active-map (kbd "C-n") 'company-select-next)
 (define-key company-active-map (kbd "C-p") 'company-select-previous)
-(define-key company-search-map (kbd "C-n") 'company-select-next)
-(define-key company-search-map (kbd "C-p") 'company-select-previous)
 (define-key company-active-map (kbd "C-s") 'company-filter-candidates)
-(define-key company-active-map (kbd "C-i") 'company-complete-selection)
 (define-key company-active-map [tab] 'company-complete-selection)
-(define-key company-active-map (kbd "C-f") 'company-complete-selection)
-(define-key emacs-lisp-mode-map (kbd "C-M-i") 'company-complete)
 
-(defvar company-mode/enable-yas t
-  "Enable yasnippet for all backends.")
-(defun company-mode/backend-with-yas (backend)
-  (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
-      backend
-    (append (if (consp backend) backend (list backend))
-            '(:with company-yasnippet))))
-(setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+;; Markdown
+(require 'grip-mode)
+(require 'markdown-mode)
+(use-package grip-mode
+  :ensure t
+  :bind (:map markdown-mode-command-map
+              ("g" . grip-mode)))
+(setq grip-github-user "")
+(define-key markdown-mode-command-map (kbd "g") 'grip-mode)
 
+
+;;(defvar company-mode/enable-yas t
+;;  "Enable yasnippet for all backends.")
+;;(defun company-mode/backend-with-yas (backend)
+;;  (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+;;      backend
+;;    (append (if (consp backend) backend (list backend))
+;;            '(:with company-yasnippet))))
+;;(setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 
 (package-initialize)
-
-
 
 (menu-bar-mode 0)
 (tool-bar-mode 0)
@@ -60,7 +61,7 @@
  '(indent-tabs-mode t)
  '(inhibit-startup-screen t)
  '(package-selected-packages
-	 '(lsp-latex highlight-indent-guides auto-sudoedit gruber-darker-theme))
+	 '(exec-path-from-shell markdown-mode use-package grip-mode highlight-indent-guides auto-sudoedit gruber-darker-theme))
  '(tab-width 2))
 
 (custom-set-faces
@@ -101,7 +102,7 @@
     (backward-delete-char 1)))
 
 (global-set-key  [C-backspace]
-            'backward-kill-char-or-word)
+								 'backward-kill-char-or-word)
 
-;;(define-key paredit-mode-map (kbd "<s-f1>") nil)
-;;(define-key paredit-mode-map (kbd "<s-f2>") nil)
+(electric-pair-mode 1)
+(setq electric-pair-preserve-balance nil)
