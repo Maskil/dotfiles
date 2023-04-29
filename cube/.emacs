@@ -1,5 +1,3 @@
-(exec-path-from-shell-initialize)
-(setq shell-command-switch "-c")
 (require 'package)
 (require 'use-package)
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
@@ -9,6 +7,12 @@
 
 (setq backup-directory-alist `(("." . "~/.saves")))
 (setq auto-save-file-name-transforms `((".*" "~/.emacs-saves/" t)))
+
+(exec-path-from-shell-copy-env "PATH")
+
+(exec-path-from-shell-initialize)
+
+(setq shell-command-switch "-lc")
 
 (require 'company)
 (global-company-mode)
