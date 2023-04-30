@@ -1,0 +1,18 @@
+(add-hook 'c-mode-hook
+					(lambda()
+						(unless (or (file-exists-p "makefile") (file-exists-p "Makefile"))
+						(set (make-local-variable 'compile-command)
+								 (concat "gcc -Wall " (shell-quote-argument buffer-file-name))))))
+
+(add-hook 'c++-mode-hook
+					(lambda()
+						(unless (or (file-exists-p "makefile") (file-exists-p "Makefile"))
+						(set (make-local-variable 'compile-command)
+								 (concat "g++ -std=c++11 -Wall " (shell-quote-argument buffer-file-name))))))
+
+(add-hook 'python-mode-hook
+					(lambda()
+						(set (make-local-variable 'compile-command)
+								 (concat "python " (shell-quote-argument buffer-file-name)))))
+
+

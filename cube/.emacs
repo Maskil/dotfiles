@@ -1,26 +1,32 @@
+(exec-path-from-shell-initialize)
 (require 'package)
 (require 'use-package)
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
 (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/") t)
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
 (add-to-list 'package-archives '("ELPA" . "http://tromey.com/elpa/") t)
+(add-to-list 'same-window-buffer-names "*compilation*")
+(load "~/.emacs.d/compile-modes.el")
 
+(set-face-attribute 'default nil :height 120)
+
+;; tmp files
 (setq backup-directory-alist `(("." . "~/.saves")))
 (setq auto-save-file-name-transforms `((".*" "~/.emacs-saves/" t)))
 
-(exec-path-from-shell-copy-env "PATH")
-
-(exec-path-from-shell-initialize)
-
-(setq shell-command-switch "-lc")
-
+;; Company
 (require 'company)
+(require 'jedi-core)
 (global-company-mode)
+(add-hook 'python-mode-hook 'jedi:setup)
+(add-to-list 'company-backends 'company-jedi)
 (define-key company-active-map (kbd "C-f") 'company-complete-selection)
 (define-key company-active-map (kbd "C-n") 'company-select-next)
 (define-key company-active-map (kbd "C-p") 'company-select-previous)
 (define-key company-active-map (kbd "C-s") 'company-filter-candidates)
 (define-key company-active-map [tab] 'company-complete-selection)
+(setq jedi:complete-on-dot t)
+(setq jedi:use-shortcuts t)
 
 ;; Markdown
 (require 'grip-mode)
@@ -29,18 +35,10 @@
   :ensure t
   :bind (:map markdown-mode-command-map
               ("g" . grip-mode)))
-(setq grip-github-user "")
+(setq grip-github-user "Maskil")
+(setq grip-github-password "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")
 (define-key markdown-mode-command-map (kbd "g") 'grip-mode)
 
-
-;;(defvar company-mode/enable-yas t
-;;  "Enable yasnippet for all backends.")
-;;(defun company-mode/backend-with-yas (backend)
-;;  (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
-;;      backend
-;;    (append (if (consp backend) backend (list backend))
-;;            '(:with company-yasnippet))))
-;;(setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 
 (package-initialize)
@@ -48,6 +46,7 @@
 (menu-bar-mode 0)
 (tool-bar-mode 0)
 (display-time)
+(setq split-width-threshold nil)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -65,7 +64,7 @@
  '(indent-tabs-mode t)
  '(inhibit-startup-screen t)
  '(package-selected-packages
-	 '(exec-path-from-shell markdown-mode use-package grip-mode highlight-indent-guides auto-sudoedit gruber-darker-theme))
+	 '(company-jedi exec-path-from-shell markdown-mode use-package grip-mode highlight-indent-guides auto-sudoedit gruber-darker-theme))
  '(tab-width 2))
 
 (custom-set-faces
@@ -77,7 +76,7 @@
 
 ;(setq-default c-basic-offset 2)
 ;(setq-default c-basic-indent 2)
-(setq-default python-indent-guess-indent-offset t)
+;(setq-default python-indent-guess-indent-offset nil)
 
 (setq display-line-numbers-type 'relative)
 (global-display-line-numbers-mode)
@@ -110,3 +109,8 @@
 
 (electric-pair-mode 1)
 (setq electric-pair-preserve-balance nil)
+
+(add-hook 'c-mode-hook
+					(lambda()
+						(set (make-local-variable 'compile-command)
+								 (concat "gcc -Wall " (shell-quote-argument (file-name-sans-extension buffer-file-name))))))
