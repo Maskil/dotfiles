@@ -1,18 +1,26 @@
 (exec-path-from-shell-initialize)
+(exec-path-from-shell-copy-env "pat")
 (require 'package)
 (require 'use-package)
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
 (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/") t)
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
 (add-to-list 'package-archives '("ELPA" . "http://tromey.com/elpa/") t)
+(add-to-list 'load-path "/usr/share/emacs/site-lisp/emacs-mozc")
 (add-to-list 'same-window-buffer-names "*compilation*")
 (load "~/.emacs.d/compile-modes.el")
 
 (set-face-attribute 'default nil :height 120)
 
+;; japanese
+(require 'mozc)
+(setq default-input-method "japanese-mozc")
+(prefer-coding-system 'utf-8)
+
 ;; tmp files
 (setq backup-directory-alist `(("." . "~/.saves")))
 (setq auto-save-file-name-transforms `((".*" "~/.emacs-saves/" t)))
+(setq backup-directory-alist            '((".*" . "~/.Trash")))
 
 ;; Company
 (require 'company)
@@ -47,25 +55,29 @@
 (tool-bar-mode 0)
 (display-time)
 (setq split-width-threshold nil)
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 2)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ansi-color-faces-vector
-	 [default default default italic underline success warning error])
- '(ansi-color-names-vector
-	 ["#2d3743" "#ff4242" "#74af68" "#dbdb95" "#34cae2" "#008b8b" "#00ede1" "#e1e1e0"])
+  '(ansi-color-faces-vector
+     [default default default italic underline success warning error])
+  '(ansi-color-names-vector
+     ["#2d3743" "#ff4242" "#74af68" "#dbdb95" "#34cae2" "#008b8b" "#00ede1" "#e1e1e0"])
  '(custom-enabled-themes '(gruber-darker))
- '(custom-safe-themes
-	 '("bddf21b7face8adffc42c32a8223c3cc83b5c1bbd4ce49a5743ce528ca4da2b6" default))
+  '(custom-safe-themes
+     '("bddf21b7face8adffc42c32a8223c3cc83b5c1bbd4ce49a5743ce528ca4da2b6" default))
  '(highlight-indent-guides-method 'bitmap)
- '(indent-tabs-mode t)
  '(inhibit-startup-screen t)
- '(package-selected-packages
-	 '(company-jedi exec-path-from-shell markdown-mode use-package grip-mode highlight-indent-guides auto-sudoedit gruber-darker-theme))
- '(tab-width 2))
+ '(lisp-indent-offset 2)
+  '(package-selected-packages
+     '(mozc company-jedi exec-path-from-shell markdown-mode use-package grip-mode highlight-indent-guides auto-sudoedit gruber-darker-theme))
+ '(python-indent-guess-indent-offset t)
+ '(python-indent-offset 2)
+ '(sh-basic-offset 2))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -73,10 +85,6 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
-;(setq-default c-basic-offset 2)
-;(setq-default c-basic-indent 2)
-;(setq-default python-indent-guess-indent-offset nil)
 
 (setq display-line-numbers-type 'relative)
 (global-display-line-numbers-mode)
