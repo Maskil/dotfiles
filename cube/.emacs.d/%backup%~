@@ -1,4 +1,2 @@
 #!/usr/bin/bash
-git add $1
-git commit -m $2
-git push
+ffmpeg -i video.avi -r 60 -filter:v "setpts=0.0625*PTS" -vcodec libx264 -an timelapse.avi

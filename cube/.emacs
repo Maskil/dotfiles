@@ -1,3 +1,4 @@
+(global-so-long-mode 1)
 (exec-path-from-shell-initialize)
 (exec-path-from-shell-copy-env "pat")
 (require 'package)
@@ -9,6 +10,8 @@
 (add-to-list 'load-path "/usr/share/emacs/site-lisp/emacs-mozc")
 (add-to-list 'same-window-buffer-names "*compilation*")
 (load "~/.emacs.d/compile-modes.el")
+
+(add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
 
 (set-face-attribute 'default nil :height 120)
 
@@ -74,7 +77,7 @@
  '(inhibit-startup-screen t)
  '(lisp-indent-offset 2)
   '(package-selected-packages
-     '(mozc company-jedi exec-path-from-shell markdown-mode use-package grip-mode highlight-indent-guides auto-sudoedit gruber-darker-theme))
+     '(matlab-mode so-long mozc company-jedi exec-path-from-shell markdown-mode use-package grip-mode highlight-indent-guides auto-sudoedit gruber-darker-theme))
  '(python-indent-guess-indent-offset t)
  '(python-indent-offset 2)
  '(sh-basic-offset 2))
