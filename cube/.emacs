@@ -1,3 +1,4 @@
+(global-unset-key (kbd "C-z"))
 (global-so-long-mode 1)
 (exec-path-from-shell-initialize)
 (exec-path-from-shell-copy-env "pat")
