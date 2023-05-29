@@ -1,0 +1,10 @@
+/sudo:root@CUBE:/etc/profile
+~/.emacs-saves/#!sudo:root@CUBE:!etc!profile#
+/home/maskil/.emacs
+~/.emacs-saves/#!home!maskil!.emacs#
+/.emacs
+~/.emacs-saves/#!.emacs#
+/sudo:root@CUBE:/etc/bash.bashrc
+~/.emacs-saves/#!sudo:root@CUBE:!etc!bash.bashrc#
+/sudo:root@CUBE:/etc/bash.rc
+~/.emacs-saves/#!sudo:root@CUBE:!etc!bash.rc#
