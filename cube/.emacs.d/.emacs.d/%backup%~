@@ -1,2 +1,0 @@
-#!/usr/bin/bash
-ffmpeg -i video.avi -r 60 -filter:v "setpts=0.0625*PTS" -vcodec libx264 -an timelapse.avi
