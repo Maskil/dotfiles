@@ -47,8 +47,7 @@
   :ensure t
   :bind (:map markdown-mode-command-map
               ("g" . grip-mode)))
-(setq grip-github-user "Maskil")
-(setq grip-github-password "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")
+
 (define-key markdown-mode-command-map (kbd "g") 'grip-mode)
 
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
@@ -57,6 +56,7 @@
 
 (menu-bar-mode 0)
 (tool-bar-mode 0)
+(scroll-bar-mode 0)
 (display-time)
 (setq split-width-threshold nil)
 (setq-default indent-tabs-mode nil)
@@ -74,11 +74,13 @@
  '(custom-enabled-themes '(gruber-darker))
   '(custom-safe-themes
      '("bddf21b7face8adffc42c32a8223c3cc83b5c1bbd4ce49a5743ce528ca4da2b6" default))
+ '(grip-github-password "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")
+ '(grip-github-user "Maskil")
  '(highlight-indent-guides-method 'bitmap)
  '(inhibit-startup-screen t)
  '(lisp-indent-offset 2)
   '(package-selected-packages
-     '(matlab-mode so-long mozc company-jedi exec-path-from-shell markdown-mode use-package grip-mode highlight-indent-guides auto-sudoedit gruber-darker-theme))
+     '(cl-libify matlab-mode so-long mozc company-jedi exec-path-from-shell markdown-mode use-package grip-mode highlight-indent-guides auto-sudoedit gruber-darker-theme))
  '(python-indent-guess-indent-offset t)
  '(python-indent-offset 2)
  '(sh-basic-offset 2))
