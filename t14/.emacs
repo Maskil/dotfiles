@@ -11,7 +11,8 @@
 
 (add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
 
-(set-face-attribute 'default nil :height 120)
+;; (set-face-attribute 'default nil :height 120)
+(set-frame-font "Consolas 12" nil t)
 (setq inhibit-startup-screen t)
 
 ;; japanese
