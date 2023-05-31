@@ -1,0 +1,23 @@
+;; -*- emacs-lisp -*- <23/05/25 20:45:39 /home/maskil/.emacs.d/tramp>
+;; Tramp connection history.  Don't change this file.
+;; Run `M-x tramp-cleanup-all-connections' instead.
+
+(((tramp-file-name "sudo" "root" nil "CUBE" nil nil nil)
+   ("uname" "Linux 6.1.0-0.deb11.6-amd64")
+   ("locale" "LC_ALL=en_US.utf8")
+   ("test" "test")
+   ("remote-path"
+     ("/bin" "/usr/bin" "/sbin" "/usr/sbin" "/usr/local/bin" "/usr/local/sbin"))
+   ("pipe-buf" 4096)
+   ("remote-shell" "/bin/sh")
+   ("file-exists" "test -e")
+   ("case-insensitive" nil)
+   ("readlink" "\\readlink")
+   ("stat" "env QUOTING_STYLE=locale \\stat")
+   ("perl-file-spec" t)
+   ("perl-cwd-realpath" t)
+   ("perl" "\\perl")
+   ("id" "/bin/id")
+   ("gid-string" "root")
+   ("gid-integer" 0)
+   ("uid-integer" 0)))
