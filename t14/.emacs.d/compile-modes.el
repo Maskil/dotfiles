@@ -13,7 +13,7 @@
 (add-hook 'python-mode-hook
 	(lambda()
 		(set (make-local-variable 'compile-command)
-			(concat "python3 " (shell-quote-argument buffer-file-name)))))
+			(concat "python " (shell-quote-argument buffer-file-name)))))
 
 (add-hook 'markdown-mode-hook
   (lambda()
