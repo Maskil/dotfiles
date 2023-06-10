@@ -75,7 +75,7 @@
    '("13bfea3096a0bdc791cb2d992b5a93d93eeec3e1b2ae5a4f94f47aa48f35fb99" "bddf21b7face8adffc42c32a8223c3cc83b5c1bbd4ce49a5743ce528ca4da2b6" default))
  '(highlight-indent-guides-method 'bitmap)
  '(package-selected-packages
-   '(use-package so-long mozc matlab-mode lsp-ui lsp-treemacs lsp-latex highlight-indent-guides helm-lsp gruber-darker-theme grip-mode flycheck exec-path-from-shell company-jedi auto-sudoedit)))
+   '(use-package so-long mozc matlab-mode highlight-indent-guides gruber-darker-theme grip-mode flycheck exec-path-from-shell company-jedi auto-sudoedit)))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -100,7 +100,7 @@
       (when (looking-at "^    ")
         (replace-match "")))))
 
-(add-hook 'python-mode-hook '(lambda ()
+(add-hook 'python-mode-hook #'(lambda ()
  (setq python-indent 2)))
 
 (defun backward-kill-char-or-word ()
@@ -117,6 +117,6 @@
 (setq electric-pair-preserve-balance nil)
 
 (add-hook 'c-mode-hook
-	  (lambda()
+	  #'(lambda()
 	    (set (make-local-variable 'compile-command)
 		 (concat "gcc -Wall " (shell-quote-argument (file-name-sans-extension buffer-file-name))))))

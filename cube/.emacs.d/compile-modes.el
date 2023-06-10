@@ -19,5 +19,5 @@
   (lambda()
     (set (make-local-variable 'compile-command)
       (concat "pandoc -F pandoc-crossref " buffer-file-name " -o " (file-name-sans-extension buffer-file-name)
-        ".pdf -N --pdf-engine=lualatex --highlight-style monochrome -V documentclass=ltjarticle -V CJKmainfont=SourceHanSerif -V mainfont=SourceHanSerif -V fontsize=11.5pt -V geometry=a4paper -V geometry:margin=1in --lua-filter=%HOME%/pandoc-config/header.lua"))))
+        ".pdf -N --pdf-engine=lualatex --highlight-style monochrome -V documentclass=ltjarticle -V CJKmainfont=SourceHanSerif -V mainfont=SourceHanSerif -V fontsize=11.5pt -V geometry=a4paper -V geometry:margin=1in --lua-filter=%HOME%/dot_files/cube/pandoc-config/header.lua"))))
 
