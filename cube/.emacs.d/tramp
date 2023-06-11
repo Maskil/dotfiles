@@ -1,6 +1,5 @@
-;; -*- emacs-lisp -*- <23/05/09 17:55:05 /home/maskil/.emacs.d/tramp>
+;; -*- emacs-lisp -*- <23/06/06 10:25:14 c:/Users/maskil/.emacs.d/tramp>
 ;; Tramp connection history.  Don't change this file.
 ;; Run `M-x tramp-cleanup-all-connections' instead.
 
-(((tramp-file-name "sudo" "root" nil "CUBE" nil nil nil)
-   nil))
+(nil)

@@ -4,7 +4,7 @@ function Meta(meta)
     pandoc.RawBlock("latex", "\\pagestyle{fancy}"),
     pandoc.RawBlock("latex", "\\lhead{}"),
     pandoc.RawBlock("latex", "\\rhead{}"),
-    pandoc.RawBlock("latex", "\\renewcommand{\\headrulewidth}{0pt}"),    
+    pandoc.RawBlock("latex", "\\renewcommand{\\headrulewidth}{0pt}"),
   })
   return meta
 end

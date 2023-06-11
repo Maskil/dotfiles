@@ -1,0 +1,10 @@
+\documentclass{ltjarticle}
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{listings}
+\usepackage{luatexja-fontspec}
+\setmainfont{SourceHanSerif}
+\setmainjfont{SourceHanSerif}
+\setcounter{secnumdepth}{0}
+\title{\vspace{3in}\LARGE }
+\author{BP21042 呉牧周}
+\date{\today}
