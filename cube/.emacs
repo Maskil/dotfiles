@@ -13,8 +13,9 @@
 (load "~/.emacs.d/compile-modes.el")
 (add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
 
+
 ;; fundemental settings
-(set-frame-font "Consolas 14" nil t)
+(set-frame-font "Iosevka 14" nil t)
 (setq inhibit-startup-screen t)
 (menu-bar-mode 0)
 (tool-bar-mode 0)
@@ -108,6 +109,8 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(TeX-command-extra-options "-shell-escape")
+ '(TeX-engine 'luatex)
  '(ansi-color-faces-vector
    [default default default italic underline success warning error])
  '(ansi-color-names-vector
@@ -116,8 +119,11 @@
  '(custom-safe-themes
    '("13bfea3096a0bdc791cb2d992b5a93d93eeec3e1b2ae5a4f94f47aa48f35fb99" "bddf21b7face8adffc42c32a8223c3cc83b5c1bbd4ce49a5743ce528ca4da2b6" default))
  '(highlight-indent-guides-method 'bitmap)
+ '(indent-tabs-mode nil)
+ '(org-src-preserve-indentation nil)
  '(package-selected-packages
-   '(latex-math-preview auctex use-package so-long mozc matlab-mode highlight-indent-guides gruber-darker-theme grip-mode flycheck exec-path-from-shell company-jedi auto-sudoedit)))
+   '(magit latex-math-preview auctex use-package so-long mozc matlab-mode highlight-indent-guides gruber-darker-theme grip-mode flycheck exec-path-from-shell company-jedi auto-sudoedit))
+ '(tex-start-options ""))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
