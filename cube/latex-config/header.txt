@@ -1,10 +1,18 @@
-\documentclass{ltjarticle}
+\documentclass[11pt]{ltjarticle}
 \usepackage[a4paper, margin=1in]{geometry}
-\usepackage{listings}
+\usepackage{minted}
+\usemintedstyle{stata}
+\setminted[c]{autogobble,breaklines,breakbytokenanywhere,frame=single,obeytabs=true,tabsize=2}
+\newmintinline[inline]{text}{fontsize=\normalsize}
 \usepackage{luatexja-fontspec}
 \setmainfont{SourceHanSerif}
 \setmainjfont{SourceHanSerif}
 \setcounter{secnumdepth}{0}
-\title{\vspace{3in}\LARGE }
+\title{\vspace{3in}\LARGE 情報実験 三好回 報告書}
 \author{BP21042 呉牧周}
 \date{\today}
+
+\begin{document}
+\maketitle
+
+\end{document}
