@@ -1,14 +1,19 @@
 \documentclass[11pt]{ltjarticle}
 \usepackage[a4paper, margin=1in]{geometry}
+\usepackage{graphicx}
 \usepackage{minted}
 \usemintedstyle{stata}
-\setminted[c]{autogobble,breaklines,breakbytokenanywhere,frame=single,obeytabs=true,tabsize=2}
+\setminted[c]{autogobble,breaklines,breakbytokenanywhere,frame=single,obeytabs=true,tabsize=2,baselinestretch=1,fontsize=\small}
 \newmintinline[inline]{text}{fontsize=\normalsize}
+\newmintinline[inlinec]{c}{fontsize=\normalsize}
 \usepackage{luatexja-fontspec}
+\usepackage{xpatch}
 \setmainfont{SourceHanSerif}
 \setmainjfont{SourceHanSerif}
+\xpatchcmd{\mintinline}{\begingroup}{\begingroup\let\itshape\relax}{}{}
+\xpatchcmd{\minted}{\VerbatimEnvironment}{\VerbatimEnvironment\let\itshape\relax}{}{}
 \setcounter{secnumdepth}{0}
-\title{\vspace{3in}\LARGE 情報実験 三好回 報告書}
+\title{\vspace{3in}\LARGE }
 \author{BP21042 呉牧周}
 \date{\today}
 
