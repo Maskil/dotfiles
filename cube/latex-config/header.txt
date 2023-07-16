@@ -1,6 +1,7 @@
 \documentclass[11pt]{ltjarticle}
 \usepackage[a4paper, margin=1in]{geometry}
 \usepackage{graphicx}
+\usepackage{tabularx}
 \usepackage{minted}
 \usemintedstyle{stata}
 \setminted[c]{autogobble,breaklines,breakbytokenanywhere,frame=single,obeytabs=true,tabsize=2,baselinestretch=1,fontsize=\small}
