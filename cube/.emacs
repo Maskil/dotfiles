@@ -123,6 +123,7 @@
    '("8f5b54bf6a36fe1c138219960dd324aad8ab1f62f543bed73ef5ad60956e36ae" "cbd85ab34afb47003fa7f814a462c24affb1de81ebf172b78cb4e65186ba59d2" "d0fd069415ef23ccc21ccb0e54d93bdbb996a6cce48ffce7f810826bb243502c" "ffba0482d3548c9494e84c1324d527f73ea4e43fff8dfd0e48faa8fc6d5c2bc7" "13bfea3096a0bdc791cb2d992b5a93d93eeec3e1b2ae5a4f94f47aa48f35fb99" "bddf21b7face8adffc42c32a8223c3cc83b5c1bbd4ce49a5743ce528ca4da2b6" default))
  '(highlight-indent-guides-method 'bitmap)
  '(indent-tabs-mode nil)
+ '(js-indent-level 2)
  '(org-src-preserve-indentation nil)
  '(package-selected-packages
    '(magit latex-math-preview auctex use-package so-long mozc matlab-mode highlight-indent-guides gruber-darker-theme grip-mode flycheck exec-path-from-shell company-jedi auto-sudoedit))
