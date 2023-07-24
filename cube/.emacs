@@ -12,8 +12,8 @@
 (add-to-list 'same-window-buffer-names "*compilation*")
 (load "~/.emacs.d/compile-modes.el")
 (add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
-(add-to-list 'load-path "~/.emacs.d/almost-mono-themes")
-(add-to-list 'custom-theme-load-path "./.emacs.d/almost-mono-themes")
+(add-to-list 'load-path "~/.emacs.d/themes")
+(add-to-list 'custom-theme-load-path "./.emacs.d/themes")
 
 
 ;; fundemental settings

@@ -1,3 +1,34 @@
+;;; almost-mono-themes.el --- Almost monochromatic color themes -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2019 - 2022 John Olsson
+
+;; Author: John Olsson <john@cryon.se>
+;; Maintainer: John Olsson <john@cryon.se>
+;; URL: https://github.com/cryon/almost-mono-themes
+;; Created: 9th May 2019
+;; Version: 1.0.0
+;; Keywords: faces
+;; Package-Requires: ((emacs "24"))
+
+;; This file is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published
+;; by the Free Software Foundation, either version 3 of the License,
+;; or (at your option) any later version.
+
+;; This file is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this file.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; A suite of almost monochrome Emacs themes
+
+;;; Code:
+
 (defconst almost-mono-themes-colors
   '((white . ((background . "#ffffff")
 	      (foreground . "#000000")
@@ -86,8 +117,9 @@
       (font-lock-warning-face (:foreground ,foreground :underline (:color ,warning :style wave)))
       (font-lock-builtin-face (:bold t))
       (font-lock-variable-name-face (:foreground ,foreground :italic t))
-      ;;(font-lock-constant-face (:bold t :italic t))
+      (font-lock-constant-face (:foreground ,foreground))
       (font-lock-type-face (:bold t))
+      ;;(font-lock-preprocessor-face (:italic t))
       (font-lock-comment-face (:foreground ,weak))
       (font-lock-string-face (:foreground ,string))
       (font-lock-doc-face (:inherit font-lock-comment-face))
