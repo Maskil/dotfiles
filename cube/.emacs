@@ -12,9 +12,6 @@
 (add-to-list 'same-window-buffer-names "*compilation*")
 (load "~/.emacs.d/compile-modes.el")
 (add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
-(add-to-list 'load-path "~/.emacs.d/themes")
-(add-to-list 'custom-theme-load-path "./.emacs.d/themes")
-
 
 ;; fundemental settings
 (set-frame-font "Iosevka 14" nil t)
@@ -128,6 +125,7 @@
  '(package-selected-packages
    '(magit latex-math-preview auctex use-package so-long mozc matlab-mode highlight-indent-guides gruber-darker-theme grip-mode flycheck exec-path-from-shell company-jedi auto-sudoedit))
  '(sql-sqlite-options nil)
+ '(tab-width 2)
  '(tex-start-options ""))
 
 (custom-set-faces
