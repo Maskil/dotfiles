@@ -1,0 +1,26 @@
+\documentclass[11pt]{ltjarticle}
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{minted}
+\usemintedstyle{stata}
+\setminted[c]{autogobble,breaklines,breakbytokenanywhere,frame=single,obeytabs=true,tabsize=2,baselinestretch=1,fontsize=\small}
+\newmintinline[inline]{text}{fontsize=\normalsize}
+\newmintinline[inlinec]{c}{fontsize=\normalsize}
+\usepackage{luatexja-fontspec}
+\setmainfont{SourceHanSerif}
+\setmainjfont{SourceHanSerif}
+\setmonofont{Inconsolata}
+\setcounter{secnumdepth}{0}
+\title{}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

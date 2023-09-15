@@ -1,0 +1,2 @@
+;;; Generated package description from auto-sudoedit.el  -*- no-byte-compile: t -*-
+(define-package "auto-sudoedit" "20230323.650" "Auto sudo edit by tramp" '((emacs "26.1") (f "0.19.0")) :commit "7ee72f31e762e225595e330c6108f3a69dbb0187" :authors '(("ncaq" . "ncaq@ncaq.net")) :maintainers '(("ncaq" . "ncaq@ncaq.net")) :maintainer '("ncaq" . "ncaq@ncaq.net") :url "https://github.com/ncaq/auto-sudoedit")
