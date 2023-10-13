@@ -1,0 +1,31 @@
+\documentclass[11pt]{ltjarticle}
+\usepackage[a4paper, margin=0.5in]{geometry}
+\usepackage[en-US]{datetime2}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{tabularx}
+\usepackage{minted}
+\usepackage{multicol}
+\usepackage{float}
+\usemintedstyle{stata}
+\setminted{autogobble,breaklines,breakbytokenanywhere,frame=single,obeytabs=true,tabsize=2,baselinestretch=1}
+\newmintinline[inline]{text}{fontsize=\normalsize}
+\newmintinline[inlinec]{c}{fontsize=\normalsize}
+\usepackage{luatexja-fontspec}
+\usepackage{xpatch}
+\setmainfont{SourceHanSerif}
+\setmainjfont{SourceHanSerif}
+\makeatletter
+\renewcommand{\fnum@figure}{Fig. \thefigure}
+\makeatother
+\xpatchcmd{\mintinline}{\begingroup}{\begingroup\let\itshape\relax}{}{}
+\xpatchcmd{\minted}{\VerbatimEnvironment}{\VerbatimEnvironment\let\itshape\relax}{}{}
+\setcounter{secnumdepth}{0}
+\title{}
+\author{Muzhou Wu}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\end{document}

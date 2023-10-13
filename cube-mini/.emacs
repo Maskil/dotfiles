@@ -1,5 +1,7 @@
 ;; packages & formats
 (set-language-environment "utf-8")
+(custom-set-variables
+ '(initial-frame-alist (quote ((fullscreen . maximized)))))
 (require 'package)
 (require 'use-package)
 (require 'company)
@@ -18,7 +20,7 @@
 
 
 ;; fundemental settings
-(set-frame-font "Iosevka 16" nil t)
+(set-frame-font "Iosevka 18" nil t)
 (setq inhibit-startup-screen t)
 (menu-bar-mode 0)
 (tool-bar-mode 0)
@@ -52,6 +54,7 @@
 
 ;; Company
 (global-company-mode)
+(setq company-idle-delay 0)
 (add-hook 'python-mode-hook 'jedi:setup)
 (add-to-list 'company-backends 'company-jedi)
 (define-key company-active-map (kbd "C-f") 'company-complete-selection)
@@ -127,18 +130,14 @@
  '(ansi-color-names-vector
    ["#2d3743" "#ff4242" "#74af68" "#dbdb95" "#34cae2" "#008b8b" "#00ede1" "#e1e1e0"])
  '(compile-command "sh build.sh ")
- '(custom-enabled-themes '(zenburn))
+ '(custom-enabled-themes '(anti-zenburn))
  '(custom-safe-themes
-   '("f366d4bc6d14dcac2963d45df51956b2409a15b770ec2f6d730e73ce0ca5c8a7" "8f5b54bf6a36fe1c138219960dd324aad8ab1f62f543bed73ef5ad60956e36ae" "cbd85ab34afb47003fa7f814a462c24affb1de81ebf172b78cb4e65186ba59d2" "d0fd069415ef23ccc21ccb0e54d93bdbb996a6cce48ffce7f810826bb243502c" "ffba0482d3548c9494e84c1324d527f73ea4e43fff8dfd0e48faa8fc6d5c2bc7" "13bfea3096a0bdc791cb2d992b5a93d93eeec3e1b2ae5a4f94f47aa48f35fb99" "bddf21b7face8adffc42c32a8223c3cc83b5c1bbd4ce49a5743ce528ca4da2b6" default))
+   '("f366d4bc6d14dcac2963d45df51956b2409a15b770ec2f6d730e73ce0ca5c8a7" "2e0c6b54a07ccccdfda8b5e9c0ebb443010616658331e3c6653a83a77d990490" "13bfea3096a0bdc791cb2d992b5a93d93eeec3e1b2ae5a4f94f47aa48f35fb99" "c7737b9fc3471779c8e51ea0a37834d24aa80a0d6a79b215e7501227ada39855" default))
  '(highlight-indent-guides-method 'bitmap)
  '(indent-tabs-mode nil)
  '(js-indent-level 2)
  '(org-src-preserve-indentation nil)
- '(package-selected-packages
-   '(xterm-color zenburn-theme magit latex-math-preview auctex use-package so-long mozc matlab-mode highlight-indent-guides gruber-darker-theme grip-mode flycheck exec-path-from-shell company-jedi auto-sudoedit))
- '(sql-sqlite-options nil)
- '(tab-width 2)
- '(tex-start-options ""))
+ '(sql-sqlite-options nil))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
