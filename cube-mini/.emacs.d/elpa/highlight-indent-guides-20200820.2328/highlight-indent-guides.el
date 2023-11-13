@@ -22,8 +22,6 @@
 ;;
 ;; Author: DarthFennec <darthfennec@derpymail.org>
 ;; Version: 0.9.2
-;; Package-Version: 20200820.2328
-;; Package-Commit: cf352c85cd15dd18aa096ba9d9ab9b7ab493e8f6
 ;; Package-Requires: ((emacs "24.1"))
 ;; URL: https://github.com/DarthFennec/highlight-indent-guides
 
@@ -168,14 +166,14 @@ function should consistently return the same output given the same input."
 (defcustom highlight-indent-guides-bitmap-function
   'highlight-indent-guides--bitmap-dots
   "Determine the shape of the indent guide bitmap.
-Customizable function which 'draws' the indent guide bitmap.  The function is
+Customizable function which \\='draws\\=' the indent guide bitmap.  The function is
 called once per indentation character, and takes three parameters: WIDTH and
 HEIGHT are the pixel width and height of the character, and CREP is the
 character that should be used to represent a colored pixel.  The return value is
 a list of strings, with each string representing a row of pixels.  The list
 should be HEIGHT in size, and each string in the list should be WIDTH in size.
 Each character represents a pixel, and should be CREP if the pixel is colored,
-and ZREP if it isn't colored."
+and ZREP if it isn\\='t colored."
   :type 'function
   :group 'highlight-indent-guides)
 
@@ -309,8 +307,7 @@ function is called whenever the current line data changes."
   "Update the line cache, if necessary.
 This function is called whenever the point moves in a way that might change the
 line cache.  It only updates the cache when absolutely necessary."
-  (when (and highlight-indent-guides-responsive
-             highlight-indent-guides-mode)
+  (when highlight-indent-guides-responsive
     (let ((cached-pt (car highlight-indent-guides--line-cache))
           (cached-ln (nth 1 highlight-indent-guides--line-cache))
           (cached-dt (nth 2 highlight-indent-guides--line-cache))
@@ -631,10 +628,10 @@ instead of calculating a new one.  Otherwise, calculate a new result by running
 BODY, cache it in PROP, and return it."
   `(let ((cache (nth 4 ,prop)) plist result)
      (if (and (eq ,type (car cache))
-              (setq result (lax-plist-get (cdr cache) ,hlkey)))
+              (setq result (plist-get (cdr cache) ,hlkey)))
          result
        (setq result (progn ,@body))
-       (setq plist (lax-plist-put (cdr cache) ,hlkey result))
+       (setq plist (plist-put (cdr cache) ,hlkey result))
        (setcar (nthcdr 4 ,prop) (cons ,type plist))
        result)))
 
@@ -895,7 +892,7 @@ recursively."
                  (`column 'highlight-indent-guides--column-highlighter)
                  (`character 'highlight-indent-guides--character-highlighter)
                  (`bitmap 'highlight-indent-guides--bitmap-highlighter)))
-              (inhibit-point-motion-hooks t))
+              (cursor-intangible-mode t))
           (unless font-lock-dont-widen (widen))
           (goto-char start)
           (while (and (< (point) end) (funcall matcher end))
@@ -976,7 +973,7 @@ This function is designed to run from the `after-make-frame-functions' hook."
 ;;;###autoload
 (define-minor-mode highlight-indent-guides-mode
   "Display indent guides in a buffer."
-  nil " h-i-g" nil
+  :init-value nil
   (let ((fill-method-keywords
          '((highlight-indent-guides--fill-keyword-matcher
             0 (highlight-indent-guides--fill-highlighter) t)))
@@ -1038,7 +1035,7 @@ This function is designed to run from the `after-make-frame-functions' hook."
       (jit-lock-unregister 'highlight-indent-guides--guide-region)
       (highlight-indent-guides--unguide-region (point-min) (point-max))
       (if (fboundp 'font-lock-flush) (font-lock-flush)
-        (font-lock-fontify-buffer)))))
+        (font-lock-ensure)))))
 
 (provide 'highlight-indent-guides)
 
