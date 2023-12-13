@@ -9,7 +9,7 @@
 (add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
 
 ;; fundemental settings
-(set-frame-font "Iosevka 18" nil t)
+(set-frame-font "JetBrains Mono NL 16" nil t)
 (setq inhibit-startup-screen t)
 (menu-bar-mode t)
 (tool-bar-mode 0)
@@ -63,15 +63,17 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(compile-command "sh build.sh")
+ '(TeX-command-extra-options "-shell-escape")
+ '(TeX-engine 'luatex)
+ '(compile-command "zsh build.sh")
  '(custom-enabled-themes '(anti-zenburn))
  '(custom-safe-themes
    '("c7737b9fc3471779c8e51ea0a37834d24aa80a0d6a79b215e7501227ada39855" default))
- '(default-frame-alist '((fullscreen . maximized)))
+ ;; '(default-frame-alist '((fullscreen . maximized)))
  '(highlight-indent-guides-method 'bitmap)
  '(lsp-clients-clangd-executable nil)
  '(package-selected-packages
-   '(arduino-mode which-key company xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
+   '(smtpmail-multi arduino-mode which-key company xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
  '(warning-suppress-log-types '((comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
