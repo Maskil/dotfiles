@@ -1,18 +1,37 @@
 \documentclass[11pt]{ltjarticle}
-\usepackage[a4paper, margin=1in]{geometry}
-\usepackage{graphicx}
+\usepackage[a4paper, margin=0.5in]{geometry}
+\usepackage[en-US]{datetime2}
 \usepackage{minted}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{tabularx}
+\usepackage{multicol}
+\usepackage{float}
 \usemintedstyle{stata}
-\setminted[c]{autogobble,breaklines,breakbytokenanywhere,frame=single,obeytabs=true,tabsize=2,baselinestretch=1,fontsize=\small}
+\setminted{autogobble,breaklines,breakbytokenanywhere,frame=single,obeytabs=true,tabsize=2,baselinestretch=1}
 \newmintinline[inline]{text}{fontsize=\normalsize}
 \newmintinline[inlinec]{c}{fontsize=\normalsize}
 \usepackage{luatexja-fontspec}
+\usepackage{xpatch}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
 \setmainfont{SourceHanSerif}
 \setmainjfont{SourceHanSerif}
-\setmonofont{Inconsolata}
+\makeatletter
+\renewcommand{\fnum@figure}{Fig. \thefigure}
+\makeatother
+\xpatchcmd{\mintinline}{\begingroup}{\begingroup\let\itshape\relax}{}{}
+\xpatchcmd{\minted}{\VerbatimEnvironment}{\VerbatimEnvironment\let\itshape\relax}{}{}
 \setcounter{secnumdepth}{0}
 \title{}
-\author{}
+\author{Makihiro Go}
 \date{}
 
 \begin{document}
