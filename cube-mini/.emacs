@@ -9,7 +9,9 @@
 (add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
 
 ;; fundemental settings
-(set-frame-font "JetBrains Mono NL 16" nil t)
+(add-to-list 'default-frame-alist '(height . 150))
+(add-to-list 'default-frame-alist '(width . 150))
+(set-frame-font "Inconsolata 18" nil t)
 (setq inhibit-startup-screen t)
 (menu-bar-mode t)
 (tool-bar-mode 0)
@@ -24,6 +26,9 @@
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 (setq compilation-environment '("TERM=xterm-256color"))
 (setq ring-bell-function 'ignore)
+(require 'multiple-cursors)
+(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+(global-set-key (kbd "s-<up>") 'toggle-frame-maximized)
 ;; (setq display-line-numbers-type 'relative)
 ;; (global-display-line-numbers-mode)
 
@@ -66,14 +71,13 @@
  '(TeX-command-extra-options "-shell-escape")
  '(TeX-engine 'luatex)
  '(compile-command "zsh build.sh")
- '(custom-enabled-themes '(anti-zenburn))
+ '(custom-enabled-themes '(modus-vivendi-tritanopia))
  '(custom-safe-themes
-   '("c7737b9fc3471779c8e51ea0a37834d24aa80a0d6a79b215e7501227ada39855" default))
- ;; '(default-frame-alist '((fullscreen . maximized)))
+   '("15604b083d03519b0c2ed7b32da6d7b2dc2f6630bef62608def60cdcf9216184" "58264887d7ab17702ef85bbd96e11bd7f613622ff9c63990be860b958c978f09" "c7737b9fc3471779c8e51ea0a37834d24aa80a0d6a79b215e7501227ada39855" default))
  '(highlight-indent-guides-method 'bitmap)
  '(lsp-clients-clangd-executable nil)
  '(package-selected-packages
-   '(smtpmail-multi arduino-mode which-key company xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
+   '(modus-themes skewer-mode multiple-cursors smtpmail-multi arduino-mode which-key company xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
  '(warning-suppress-log-types '((comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
