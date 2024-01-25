@@ -9,7 +9,7 @@
 (add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
 
 ;; fundemental settings
-;(set-frame-font "JetBrains Mono NL 16" nil t)
+(set-frame-font "FreeMono 12" nil t)
 (setq inhibit-startup-screen t)
 (pixel-scroll-precision-mode t)
 (menu-bar-mode t)
@@ -69,12 +69,11 @@
  '(compile-command "zsh build.sh")
  '(custom-enabled-themes '(anti-zenburn))
  '(custom-safe-themes
-   '("c7737b9fc3471779c8e51ea0a37834d24aa80a0d6a79b215e7501227ada39855" default))
- ;; '(default-frame-alist '((fullscreen . maximized)))
+   '("c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" "c7737b9fc3471779c8e51ea0a37834d24aa80a0d6a79b215e7501227ada39855" default))
  '(highlight-indent-guides-method 'bitmap)
  '(lsp-clients-clangd-executable nil)
  '(package-selected-packages
-   '(smtpmail-multi arduino-mode which-key company xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
+   '(modus-themes smtpmail-multi arduino-mode which-key company xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
  '(warning-suppress-log-types '((comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
