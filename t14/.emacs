@@ -9,10 +9,10 @@
 (add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
 
 ;; fundemental settings
-(set-frame-font "FreeMono 12" nil t)
+(set-frame-font "Consolas 14" nil t)
 (setq inhibit-startup-screen t)
 (pixel-scroll-precision-mode t)
-(menu-bar-mode t)
+(menu-bar-mode 0)
 (tool-bar-mode 0)
 (scroll-bar-mode 0)
 (global-so-long-mode 1)
@@ -67,13 +67,13 @@
  '(TeX-command-extra-options "-shell-escape")
  '(TeX-engine 'luatex)
  '(compile-command "zsh build.sh")
- '(custom-enabled-themes '(anti-zenburn))
+ '(custom-enabled-themes '(modus-vivendi-tritanopia))
  '(custom-safe-themes
-   '("c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" "c7737b9fc3471779c8e51ea0a37834d24aa80a0d6a79b215e7501227ada39855" default))
+   '("c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" default))
  '(highlight-indent-guides-method 'bitmap)
  '(lsp-clients-clangd-executable nil)
  '(package-selected-packages
-   '(modus-themes smtpmail-multi arduino-mode which-key company xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
+   '(company modus-themes smtpmail-multi arduino-mode which-key xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
  '(warning-suppress-log-types '((comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
