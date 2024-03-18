@@ -1,4 +1,4 @@
-(set-language-environment "utf-8")
+(set-locale-environment "en_US.UTF-8")
 (require 'package)
 (require 'use-package)
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
@@ -11,7 +11,7 @@
 ;; fundemental settings
 (add-to-list 'default-frame-alist '(height . 150))
 (add-to-list 'default-frame-alist '(width . 150))
-(set-frame-font "Inconsolata 18" nil t)
+(set-frame-font "Liberation Mono 17" nil t)
 (setq inhibit-startup-screen t)
 (menu-bar-mode t)
 (tool-bar-mode 0)
@@ -54,6 +54,7 @@
 (setq company-idle-delay 0)
 
 ;; aucTeX
+(add-to-list 'auto-mode-alist '("\\.tex$" . LaTeX-mode))
 (setq TeX-auto-save t)
 (setq TeX-parse-self t)
 (setq-default TeX-master nil)
@@ -62,6 +63,19 @@
 (add-hook 'latex-mode-hook 'latex-math-mode)
 (add-hook 'latex-mode-hook 'turn-on-reftex)
 (setq reftx-plug-into-AUCTex t)
+(setq font-latex-fontify-script nil)
+(setq font-latex-fontify-sectioning 'color)
+(add-hook 'LaTeX-mode-hook
+  (lambda ()
+    (define-key LaTeX-mode-map (kbd "C-c p") "\\par\n")
+  )
+);; (define-key LaTeX-mode-map (kbd "C-c p") "\\par\n")
+
+
+(defun delete-line-no-kill ()
+  (interactive)
+  (delete-region (point) (line-end-position)))
+(global-set-key (kbd "C-S-k") 'delete-line-no-kill)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -71,13 +85,14 @@
  '(TeX-command-extra-options "-shell-escape")
  '(TeX-engine 'luatex)
  '(compile-command "zsh build.sh")
- '(custom-enabled-themes '(modus-vivendi-tritanopia))
+ '(custom-enabled-themes '(anti-zenburn))
  '(custom-safe-themes
    '("15604b083d03519b0c2ed7b32da6d7b2dc2f6630bef62608def60cdcf9216184" "58264887d7ab17702ef85bbd96e11bd7f613622ff9c63990be860b958c978f09" "c7737b9fc3471779c8e51ea0a37834d24aa80a0d6a79b215e7501227ada39855" default))
  '(highlight-indent-guides-method 'bitmap)
+ '(japanese-TeX-engine-default 'uptex)
  '(lsp-clients-clangd-executable nil)
  '(package-selected-packages
-   '(modus-themes skewer-mode multiple-cursors smtpmail-multi arduino-mode which-key company xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
+   '(fireplace modus-themes skewer-mode multiple-cursors smtpmail-multi arduino-mode which-key company xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
  '(warning-suppress-log-types '((comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
