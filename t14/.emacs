@@ -1,4 +1,4 @@
-(set-language-environment "utf-8")
+(set-locale-environment "en_US.UTF-8")
 (require 'package)
 (require 'use-package)
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
@@ -9,9 +9,9 @@
 (add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
 
 ;; fundemental settings
-(set-frame-font "Consolas 14" nil t)
+;; (set-frame-font "Source Han Code JP 11" nil t)
+(set-frame-font "Iosevka SS06 13" nil t)
 (setq inhibit-startup-screen t)
-(pixel-scroll-precision-mode t)
 (menu-bar-mode 0)
 (tool-bar-mode 0)
 (scroll-bar-mode 0)
@@ -25,8 +25,15 @@
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 (setq compilation-environment '("TERM=xterm-256color"))
 (setq ring-bell-function 'ignore)
-;; (setq display-line-numbers-type 'relative)
-;; (global-display-line-numbers-mode)
+(require 'multiple-cursors)
+(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+(global-set-key (kbd "s-<up>") 'toggle-frame-maximized)
+(setq display-line-numbers-type 'relative)
+(global-display-line-numbers-mode)
+(require 'auctex-latexmk)
+(add-hook 'LaTeX-mode-hook
+          (lambda ()
+            (add-hook 'after-save-hook 'auctex-latexmk nil t)))
 
 ;;Compiling shit
 (global-set-key (kbd "<f4>") 'arduino-mode)
@@ -50,6 +57,7 @@
 (setq company-idle-delay 0)
 
 ;; aucTeX
+(add-to-list 'auto-mode-alist '("\\.tex$" . LaTeX-mode))
 (setq TeX-auto-save t)
 (setq TeX-parse-self t)
 (setq-default TeX-master nil)
@@ -58,6 +66,19 @@
 (add-hook 'latex-mode-hook 'latex-math-mode)
 (add-hook 'latex-mode-hook 'turn-on-reftex)
 (setq reftx-plug-into-AUCTex t)
+(setq font-latex-fontify-script nil)
+(setq font-latex-fontify-sectioning 'color)
+(add-hook 'LaTeX-mode-hook
+  (lambda ()
+    (define-key LaTeX-mode-map (kbd "C-c p") "\\par\n")
+  )
+);; (define-key LaTeX-mode-map (kbd "C-c p") "\\par\n")
+
+
+(defun delete-line-no-kill ()
+  (interactive)
+  (delete-region (point) (line-end-position)))
+(global-set-key (kbd "C-S-k") 'delete-line-no-kill)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -66,14 +87,15 @@
  ;; If there is more than one, they won't work right.
  '(TeX-command-extra-options "-shell-escape")
  '(TeX-engine 'luatex)
- '(compile-command "zsh build.sh")
- '(custom-enabled-themes '(modus-vivendi-tritanopia))
+ '(compile-command "bash build.sh")
+ '(custom-enabled-themes '(deeper-blue))
  '(custom-safe-themes
-   '("c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" default))
+   '("15604b083d03519b0c2ed7b32da6d7b2dc2f6630bef62608def60cdcf9216184" "58264887d7ab17702ef85bbd96e11bd7f613622ff9c63990be860b958c978f09" "c7737b9fc3471779c8e51ea0a37834d24aa80a0d6a79b215e7501227ada39855" default))
  '(highlight-indent-guides-method 'bitmap)
+ '(japanese-TeX-engine-default 'uptex)
  '(lsp-clients-clangd-executable nil)
  '(package-selected-packages
-   '(company modus-themes smtpmail-multi arduino-mode which-key xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
+   '(auctex-latexmk fireplace skewer-mode multiple-cursors smtpmail-multi arduino-mode which-key company xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
  '(warning-suppress-log-types '((comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
