@@ -13,8 +13,8 @@
 ;; (add-to-list 'default-frame-alist '(width . 150))
 (set-frame-font "Liberation Mono 14" nil t)
 (set-fontset-font t 'cjk-misc (font-spec :family "Noto Sans Mono CJK JP" :weight 'normal :slant 'normal))
-;; (set-fontset-font t 'han (font-spec :family "Noto Sans Mono CJK JP" :weight 'normal :slant 'normal))
-;; (set-fontset-font t 'kana (font-spec :family "Noto Sans Mono CJK JP" :weight 'normal :slant 'normal))
+(set-fontset-font t 'han (font-spec :family "Noto Sans Mono CJK JP" :weight 'normal :slant 'normal))
+(set-fontset-font t 'kana (font-spec :family "Noto Sans Mono CJK JP" :weight 'normal :slant 'normal))
 (setq inhibit-startup-screen t)
 (menu-bar-mode 0)
 (tool-bar-mode 0)
@@ -48,9 +48,8 @@
 
 
 ;; tmp files
-(setq backup-directory-alist `(("." . "~/.saves")))
 (setq auto-save-file-name-transforms `((".*" "~/.emacs-saves/" t)))
-(setq backup-directory-alist '((".*" . "~/.Trash")))
+(setq backup-directory-alist '((".*" . "~/.emacs-saves")))
 
 ;; lsp & company
 (global-company-mode)
@@ -80,6 +79,42 @@
   (delete-region (point) (line-end-position)))
 (global-set-key (kbd "C-S-k") 'delete-line-no-kill)
 
+(defun aborn/backward-kill-word ()
+  "Customize/Smart backward-kill-word."
+  (interactive)
+  (let* ((cp (point))
+         (backword)
+         (end)
+         (space-pos)
+         (backword-char (if (bobp)
+                            ""           ;; cursor in begin of buffer
+                          (buffer-substring cp (- cp 1)))))
+    (if (equal (length backword-char) (string-width backword-char))
+        (progn
+          (save-excursion
+            (setq backword (buffer-substring (point) (progn (forward-word -1) (point)))))
+          (setq ab/debug backword)
+          (save-excursion
+            (when (and backword          ;; when backword contains space
+                       (s-contains? " " backword))
+              (setq space-pos (ignore-errors (search-backward " ")))))
+          (save-excursion
+            (let* ((pos (ignore-errors (search-backward-regexp "\n")))
+                   (substr (when pos (buffer-substring pos cp))))
+              (when (or (and substr (s-blank? (s-trim substr)))
+                        (s-contains? "\n" backword))
+                (setq end pos))))
+          (if end
+              (kill-region cp end)
+            (if space-pos
+                (kill-region cp space-pos)
+              (backward-kill-word 1))))
+      (kill-region cp (- cp 1)))         ;; word is non-english word
+    ))
+
+(global-set-key  [C-backspace]
+            'aborn/backward-kill-word)
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -96,7 +131,7 @@
  '(japanese-TeX-engine-default 'uptex)
  '(lsp-clients-clangd-executable nil)
  '(package-selected-packages
-   '(fireplace modus-themes skewer-mode multiple-cursors smtpmail-multi arduino-mode which-key company xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
+   '(typescript-mode fireplace modus-themes skewer-mode multiple-cursors smtpmail-multi arduino-mode which-key company xterm-color magit highlight-indent-guides auto-sudoedit auctex anti-zenburn-theme))
  '(warning-suppress-log-types '((comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
