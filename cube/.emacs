@@ -35,7 +35,7 @@
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 (setq compilation-environment '("TERM=xterm-256color"))
 (setq ring-bell-function 'ignore)
-(rc/require 'multiple-cursors)
+(require 'multiple-cursors)
 (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
 (global-set-key (kbd "s-<up>") 'toggle-frame-maximized)
 (setq display-line-numbers-type 'relative)
