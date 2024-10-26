@@ -21,6 +21,7 @@
 (set-fontset-font t 'kana (font-spec :family "Noto Sans Mono CJK JP" :weight 'normal :slant 'normal))
 (menu-bar-mode 0)
 (tool-bar-mode 0)
+(setq inhibit-splash-screen 1)
 (scroll-bar-mode 0)
 (ido-mode 1)
 (global-so-long-mode 1)
@@ -45,7 +46,7 @@
 
 ;; smex
 ;; (require 'smex 'ido-completing-read+)
-(rc/require 'ido-completing-read+)
+(rc/require 'smex 'ido-completing-read+)
 (global-set-key (kbd "M-x") 'smex)
 (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
 (ido-mode 1)
