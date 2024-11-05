@@ -16,9 +16,10 @@
 ;; (add-to-list 'default-frame-alist '(height . 150))
 ;; (add-to-list 'default-frame-alist '(width . 150))
 (add-to-list 'default-frame-alist `(font . "Source Code Pro 13"))
-(set-fontset-font t 'cjk-misc (font-spec :family "Noto Sans Mono CJK JP" :weight 'normal :slant 'normal))
-(set-fontset-font t 'han (font-spec :family "Noto Sans Mono CJK JP" :weight 'normal :slant 'normal))
-(set-fontset-font t 'kana (font-spec :family "Noto Sans Mono CJK JP" :weight 'normal :slant 'normal))
+(set-fontset-font t 'japanese-jisx0208 (font-spec :family "Noto Sans JP"))
+(set-fontset-font t 'cjk-misc (font-spec :family "Noto Sans JP" :weight 'normal :slant 'normal))
+(set-fontset-font t 'han (font-spec :family "Noto Sans JP" :weight 'normal :slant 'normal))
+(set-fontset-font t 'kana (font-spec :family "Noto Sans JP" :weight 'normal :slant 'normal))
 (menu-bar-mode 0)
 (tool-bar-mode 0)
 (setq inhibit-splash-screen 1)
@@ -43,6 +44,7 @@
 (global-display-line-numbers-mode)
 (delete-selection-mode 1)
 (compilation-shell-minor-mode)
+(pixel-scroll-precision-mode)
 
 ;; smex
 ;; (require 'smex 'ido-completing-read+)
@@ -75,8 +77,14 @@
 
 ;; lsp & company
 (rc/require 'company)
+(rc/require 'company-jedi)
 (global-company-mode)
 (setq company-idle-delay 0)
+(add-to-list 'company-backends 'company-jedi)
+(require 'python)
+(add-hook 'python-mode-hook 'jedi:setup)
+
+
 
 ;; aucTeX
 (add-to-list 'auto-mode-alist '("\\.tex$" . LaTeX-mode))
