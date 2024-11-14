@@ -25,6 +25,7 @@
 (setq inhibit-splash-screen 1)
 (scroll-bar-mode 0)
 (ido-mode 1)
+(define-key ido-file-completion-map "C-f" 'ido-fallback-command)
 (global-so-long-mode 1)
 (global-visual-line-mode t)
 (setq split-width-threshold nil)
@@ -54,6 +55,9 @@
 (ido-mode 1)
 (ido-everywhere 1)
 (ido-ubiquitous-mode 1)
+
+;; pdf-tools
+(pdf-loader-install)
 
 ;; render html
 (load-library "shr.el")
@@ -126,6 +130,26 @@
                (backward-delete-char 1)))
     ;; otherwise, just do the normal kill word.
     (backward-kill-word 1)))
+
+;; window size
+(defun set-frame-size-according-to-resolution ()
+  (interactive)
+  (if window-system
+  (progn
+    ;; use 120 char wide window for largeish displays
+    ;; and smaller 80 column windows for smaller displays
+    ;; pick whatever numbers make sense for you
+    (if (> (x-display-pixel-width) 1280)
+           (add-to-list 'default-frame-alist (cons 'width 120))
+           (add-to-list 'default-frame-alist (cons 'width 80)))
+    ;; for the height, subtract a couple hundred pixels
+    ;; from the screen height (for panels, menubars and
+    ;; whatnot), then divide by the height of a char to
+    ;; get the height we want
+    (add-to-list 'default-frame-alist 
+         (cons 'height (/ (- (x-display-pixel-height) 200)
+                             (frame-char-height)))))))
+(set-frame-size-according-to-resolution)
 
 (require 'simpc-mode)
 (add-to-list 'auto-mode-alist '("\\.[hc]\\(pp\\)?\\'" . simpc-mode))

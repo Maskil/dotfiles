@@ -3,13 +3,14 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(TeX-engine 'luatex)
  '(TeX-view-program-selection
    '(((output-dvi has-no-display-manager)
       "dvi2tty")
      ((output-dvi style-pstricks)
       "dvips and gv")
      (output-dvi "xdvi")
-     (output-pdf "PDF Tools")
+     (output-pdf "xdg-open")
      (output-html "xdg-open")))
  '(compile-command "bash build.sh ")
  '(custom-safe-themes
@@ -19,7 +20,7 @@
  '(highlight-indent-guides-method 'character)
  '(magit-bury-buffer-function 'magit-restore-window-configuration)
  '(package-selected-packages
-   '(company-jedi pdf-tools markdown-mode gruber-darker-theme auctex-latexmk auctex magit dash-functional dash)))
+   '(csv-mode company-jedi pdf-tools markdown-mode gruber-darker-theme auctex-latexmk auctex magit dash-functional dash)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
