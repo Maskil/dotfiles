@@ -48,7 +48,6 @@
 (pixel-scroll-precision-mode)
 
 ;; smex
-;; (require 'smex 'ido-completing-read+)
 (rc/require 'smex 'ido-completing-read+)
 (global-set-key (kbd "M-x") 'smex)
 (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)

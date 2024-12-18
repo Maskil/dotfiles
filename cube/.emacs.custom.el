@@ -21,7 +21,8 @@
  '(highlight-indent-guides-method 'character)
  '(magit-bury-buffer-function 'magit-restore-window-configuration)
  '(package-selected-packages
-   '(ein csv-mode company-jedi pdf-tools markdown-mode gruber-darker-theme auctex-latexmk auctex magit dash-functional dash)))
+   '(ein csv-mode company-jedi pdf-tools markdown-mode gruber-darker-theme auctex-latexmk auctex magit dash-functional dash))
+ '(smerge-command-prefix "\3^"))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
