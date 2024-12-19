@@ -46,6 +46,7 @@
 (delete-selection-mode 1)
 (compilation-shell-minor-mode)
 (pixel-scroll-precision-mode)
+(global-visual-line-mode)
 
 ;; smex
 (rc/require 'smex 'ido-completing-read+)
