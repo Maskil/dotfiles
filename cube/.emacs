@@ -56,6 +56,7 @@
 (ido-ubiquitous-mode 1)
 
 ;; pdf-tools
+(rc/require 'pdf-tools)
 (pdf-loader-install)
 
 ;; render html
