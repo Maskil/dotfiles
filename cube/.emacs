@@ -63,6 +63,18 @@
 ;; render html
 (load-library "shr.el")
 
+;; old reddit
+(defun eww-redirect-reddit ()
+  "Redirect 'https://www.reddit.com' to 'https://old.reddit.com' in EWW."
+  (when-let ((url (eww-current-url)))
+    (when (string-prefix-p "https://www.reddit.com" url)
+      (eww-browse-url (replace-regexp-in-string
+                       "^https://www\\.reddit\\.com" "https://old.reddit.com" url)))))
+(defun eww-enable-visual-line-mode ()
+  "Enable visual-line-mode after EWW finishes rendering."
+  (run-at-time 0.1 nil #'visual-line-mode 1))
+(add-hook 'eww-after-render-hook #'eww-redirect-reddit #'eww-enable-visual-line-mode)
+
 ;;Compiling shit
 (global-set-key (kbd "<f4>") 'arduino-mode)
 (global-set-key (kbd "<f5>") 'compile)

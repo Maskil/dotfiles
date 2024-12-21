@@ -20,9 +20,11 @@
  '(highlight-indent-guides-character 124)
  '(highlight-indent-guides-method 'character)
  '(magit-bury-buffer-function 'magit-restore-window-configuration)
+ '(mozc-candidate-style 'echo-area)
  '(package-selected-packages
    '(ein csv-mode company-jedi pdf-tools markdown-mode gruber-darker-theme auctex-latexmk auctex magit dash-functional dash))
- '(smerge-command-prefix "\3^"))
+ '(smerge-command-prefix "\3^")
+ '(warning-suppress-types '((pdf-view))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
