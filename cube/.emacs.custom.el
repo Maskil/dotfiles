@@ -4,32 +4,21 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(TeX-engine 'luatex)
- '(TeX-view-program-selection
-   '(((output-dvi has-no-display-manager)
-      "dvi2tty")
-     ((output-dvi style-pstricks)
-      "dvips and gv")
-     (output-dvi "xdvi")))
  '(compile-command "bash build.sh ")
+ '(completion-styles '(basic partial-completion))
  '(custom-safe-themes
-   '("01a9797244146bbae39b18ef37e6f2ca5bebded90d9fe3a2f342a9e863aaa4fd" default))
- '(ein:jupyter-server-use-subcommand "server")
- '(highlight-indent-guides-auto-character-face-perc 50)
+   '("a6c5f5581d1d0783aec7dc50b2656727a3a6f3755a38e9d76938c8ec040a77a0" default))
+ '(highlight-indent-guides-auto-character-face-perc 20)
+ '(highlight-indent-guides-auto-even-face-perc 15)
+ '(highlight-indent-guides-auto-odd-face-perc 15)
  '(highlight-indent-guides-character 124)
  '(highlight-indent-guides-method 'character)
- '(magit-bury-buffer-function 'magit-restore-window-configuration)
- '(mozc-candidate-style 'echo-area)
  '(package-selected-packages
-   '(ein csv-mode company-jedi pdf-tools markdown-mode gruber-darker-theme auctex-latexmk auctex magit dash-functional dash))
- '(smerge-command-prefix "\3^")
- '(warning-suppress-types '((pdf-view))))
+   '(sexy-monochrome-theme poet-theme slime-theme-theme smex pdf-tools multiple-cursors mozc markdown-mode magit ido-completing-read+ gruber-darker-theme ein dash-functional csv-mode company-jedi auctex-latexmk)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(highlight-indent-guides-character-face ((t (:foreground "#1a801a801a80"))))
- '(highlight-indent-guides-stack-character-face ((t (:foreground "#bebebe"))))
- '(highlight-indent-guides-top-character-face ((t (:foreground "#bebebe"))))
- '(highlight-indent-guides-top-even-face ((t (:background "#bebebe")))))
+ )
 (put 'narrow-to-region 'disabled nil)

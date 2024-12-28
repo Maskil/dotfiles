@@ -10,7 +10,7 @@
 (add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
 
 ;; theme
-(rc/require-theme 'gruber-darker)
+(rc/require-theme 'sexy-monochrome)
 
 ;; fundemental settings
 ;; (add-to-list 'default-frame-alist '(height . 150))
@@ -36,6 +36,10 @@
 (setq electric-pair-preserve-balance nil)
 (require 'highlight-indent-guides)
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
+(setq highlight-indent-guides-auto-enabled nil)
+(set-face-background 'highlight-indent-guides-odd-face "darkgray")
+(set-face-background 'highlight-indent-guides-even-face "dimgray")
+(set-face-foreground 'highlight-indent-guides-character-face "dimgray")
 (setq compilation-environment '("TERM=xterm-256color"))
 (setq ring-bell-function 'ignore)
 (rc/require 'multiple-cursors)
@@ -166,4 +170,15 @@
 
 (require 'simpc-mode)
 (add-to-list 'auto-mode-alist '("\\.[hc]\\(pp\\)?\\'" . simpc-mode))
+
+;; remove trailing whitespaces
+(defun rm-trailing-spaces ()
+  "Remove spaces at ends of all lines"
+  (interactive)
+  (save-excursion
+    (let ((current (point)))
+      (goto-char 0)
+      (while (re-search-forward "[ \t]+$" nil t)
+        (replace-match "" nil nil))
+      (goto-char current))))
 (load-file custom-file)
