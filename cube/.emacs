@@ -15,11 +15,7 @@
 ;; fundemental settings
 ;; (add-to-list 'default-frame-alist '(height . 150))
 ;; (add-to-list 'default-frame-alist '(width . 150))
-(add-to-list 'default-frame-alist `(font . "Source Code Pro 13"))
-(set-fontset-font t 'japanese-jisx0208 (font-spec :family "Noto Sans JP"))
-(set-fontset-font t 'cjk-misc (font-spec :family "Noto Sans JP" :weight 'normal :slant 'normal))
-(set-fontset-font t 'han (font-spec :family "Noto Sans JP" :weight 'normal :slant 'normal))
-(set-fontset-font t 'kana (font-spec :family "Noto Sans JP" :weight 'normal :slant 'normal))
+(add-to-list 'default-frame-alist `(font . "Sarasa Mono J 13"))
 (menu-bar-mode 0)
 (tool-bar-mode 0)
 (setq inhibit-splash-screen 1)
@@ -56,13 +52,13 @@
 (rc/require 'smex 'ido-completing-read+)
 (global-set-key (kbd "M-x") 'smex)
 (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
-(ido-mode 1)
 (ido-everywhere 1)
 (ido-ubiquitous-mode 1)
 
 ;; pdf-tools
 (rc/require 'pdf-tools)
 (pdf-loader-install)
+(add-hook 'pdf-tools-enabled-hook (lambda () (display-line-numbers-mode -1)))
 
 ;; render html
 (load-library "shr.el")
@@ -80,7 +76,7 @@
 (add-hook 'eww-after-render-hook #'eww-redirect-reddit #'eww-enable-visual-line-mode)
 
 ;;Compiling shit
-(global-set-key (kbd "<f4>") 'arduino-mode)
+(global-set-key (kbd "<f7>") 'arduino-mode)
 (global-set-key (kbd "<f5>") 'compile)
 (global-set-key (kbd "<f6>") 'recompile)
 (rc/require 'ansi-color)
@@ -104,8 +100,13 @@
 (add-to-list 'company-backends 'company-jedi)
 (require 'python)
 (add-hook 'python-mode-hook 'jedi:setup)
-
-
+(add-hook 'company-mode-hook
+          (lambda ()
+            (setq company-filter-always-p t)
+            (setf company-filter '( lambda (candidates)
+                                     (cl-remove-if-not
+                                      (lambda (dir) (not (string-match "^\\./|^\\.\\/" dir)))
+                                      candidates)))))
 
 ;; aucTeX
 (add-to-list 'auto-mode-alist '("\\.tex$" . LaTeX-mode))
@@ -118,11 +119,9 @@
 (setq reftx-plug-into-AUCTex t)
 (setq font-latex-fontify-script nil)
 (setq font-latex-fontify-sectioning 'color)
-(add-hook 'LaTeX-mode-hook
-  (lambda ()
-    (define-key LaTeX-mode-map (kbd "C-c p") "\\par\n")
-  )
-);; (define-key LaTeX-mode-map (kbd "C-c p") "\\par\n")
+(defalias 'japanese-change-line
+  (kmacro "C-\\ % <return> C-\\"))
+(add-hook 'LaTeX-mode-hook (lambda () (local-set-key (kbd "C-c p") 'japanese-change-line)))
 (auctex-latexmk-setup)
 
 ;; mozc japanese shit
@@ -167,6 +166,12 @@
          (cons 'height (/ (- (x-display-pixel-height) 200)
                              (frame-char-height)))))))
 (set-frame-size-according-to-resolution)
+
+;; do not split window for error messages
+(setq same-window-regexps '("."))
+
+;; auto revert
+(global-auto-revert-mode t)
 
 (require 'simpc-mode)
 (add-to-list 'auto-mode-alist '("\\.[hc]\\(pp\\)?\\'" . simpc-mode))
