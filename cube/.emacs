@@ -176,6 +176,15 @@
 (require 'simpc-mode)
 (add-to-list 'auto-mode-alist '("\\.[hc]\\(pp\\)?\\'" . simpc-mode))
 
+(defun company-remove-dot-and-dotdot (candidates)
+  "Remove `.` and `..` from the COMPANY completion CANDIDATES."
+  (seq-remove (lambda (candidate)
+                (or (string-equal candidate "./")
+                    (string-equal candidate "../")))
+              candidates))
+
+(setq company-transformers '(company-remove-dot-and-dotdot))
+
 ;; remove trailing whitespaces
 (defun rm-trailing-spaces ()
   "Remove spaces at ends of all lines"
