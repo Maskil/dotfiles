@@ -15,7 +15,7 @@
 ;; fundemental settings
 ;; (add-to-list 'default-frame-alist '(height . 150))
 ;; (add-to-list 'default-frame-alist '(width . 150))
-(add-to-list 'default-frame-alist `(font . "Sarasa Mono J 13"))
+(add-to-list 'default-frame-alist `(font . "Sarasa Mono J"))
 (menu-bar-mode 0)
 (tool-bar-mode 0)
 (setq inhibit-splash-screen 1)
