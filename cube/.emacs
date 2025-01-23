@@ -3,6 +3,7 @@
 (add-to-list 'load-path "~/.emacs.local/")
 (load-file "~/.emacs.rc/rc.el")
 
+(rc/require 'exec-path-from-shell)
 (rc/require 'magit)
 (rc/require 'auctex)
 (rc/require 'auctex-latexmk)
@@ -16,6 +17,8 @@
 ;; (add-to-list 'default-frame-alist '(height . 150))
 ;; (add-to-list 'default-frame-alist '(width . 150))
 ;; (add-to-list 'default-frame-alist `(font . "Sarasa Mono J"))
+(exec-path-from-shell-initialize)
+(setq shell-command-switch "-ic")
 (set-face-attribute 'default nil :font "Sarasa Mono J" :height 128)
 (set-frame-font "Sarasa Mono J" nil t)
 (menu-bar-mode 0)
