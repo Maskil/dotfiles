@@ -11,14 +11,11 @@
 (add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
 
 ;; theme
-(rc/require-theme 'sexy-monochrome)
+;; (rc/require-theme 'sexy-monochrome)
 
 ;; fundemental settings
-;; (add-to-list 'default-frame-alist '(height . 150))
-;; (add-to-list 'default-frame-alist '(width . 150))
 ;; (add-to-list 'default-frame-alist `(font . "Sarasa Mono J"))
 (exec-path-from-shell-initialize)
-(setq shell-command-switch "-ic")
 (set-face-attribute 'default nil :font "Sarasa Mono J" :height 128)
 (set-frame-font "Sarasa Mono J" nil t)
 (menu-bar-mode 0)
@@ -108,10 +105,10 @@
 (add-hook 'company-mode-hook
           (lambda ()
             (setq company-filter-always-p t)
-            (setf company-filter '( lambda (candidates)
-                                     (cl-remove-if-not
-                                      (lambda (dir) (not (string-match "^\\./|^\\.\\/" dir)))
-                                      candidates)))))
+            (setf company-filter '(lambda (candidates)
+                                    (cl-remove-if-not
+                                     (lambda (dir) (not (string-match "^\\./|^\\.\\/" dir)))
+                                     candidates)))))
 
 ;; aucTeX
 (add-to-list 'auto-mode-alist '("\\.tex$" . LaTeX-mode))
@@ -152,26 +149,6 @@
     ;; otherwise, just do the normal kill word.
     (backward-kill-word 1)))
 
-;; window size
-(defun set-frame-size-according-to-resolution ()
-  (interactive)
-  (if window-system
-  (progn
-    ;; use 120 char wide window for largeish displays
-    ;; and smaller 80 column windows for smaller displays
-    ;; pick whatever numbers make sense for you
-    (if (> (x-display-pixel-width) 1280)
-           (add-to-list 'default-frame-alist (cons 'width 120))
-           (add-to-list 'default-frame-alist (cons 'width 80)))
-    ;; for the height, subtract a couple hundred pixels
-    ;; from the screen height (for panels, menubars and
-    ;; whatnot), then divide by the height of a char to
-    ;; get the height we want
-    (add-to-list 'default-frame-alist 
-         (cons 'height (/ (- (x-display-pixel-height) 200)
-                             (frame-char-height)))))))
-(set-frame-size-according-to-resolution)
-
 ;; do not split window for error messages
 (setq same-window-regexps '("."))
 
@@ -200,4 +177,12 @@
       (while (re-search-forward "[ \t]+$" nil t)
         (replace-match "" nil nil))
       (goto-char current))))
+
+(use-package grip-mode
+  :ensure t
+  :config (setq grip-use-mdopen t) ;; to use `mdopen` instead of `grip`
+  :bind (:map markdown-mode-command-map
+         ("g" . grip-mode)))
+
 (load-file custom-file)
+
