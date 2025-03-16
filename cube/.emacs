@@ -16,7 +16,7 @@
 ;; fundemental settings
 ;; (add-to-list 'default-frame-alist `(font . "Sarasa Mono J"))
 (exec-path-from-shell-initialize)
-(set-face-attribute 'default nil :font "Sarasa Mono J" :height 128)
+(set-face-attribute 'default nil :font "Sarasa Mono J" :height 132)
 (set-frame-font "Sarasa Mono J" nil t)
 (menu-bar-mode 0)
 (tool-bar-mode 0)
@@ -24,6 +24,7 @@
 (scroll-bar-mode 0)
 (ido-mode 1)
 (define-key ido-file-completion-map "C-f" 'ido-fallback-command)
+(column-number-mode 1)
 (global-so-long-mode 1)
 (global-visual-line-mode t)
 (setq split-width-threshold nil)
@@ -49,6 +50,13 @@
 (compilation-shell-minor-mode)
 (pixel-scroll-precision-mode)
 (global-visual-line-mode)
+
+(defun y-or-n-p-with-return (orig-func &rest args)
+  (let ((query-replace-map (copy-keymap query-replace-map)))
+    (define-key query-replace-map (kbd "RET") 'act)
+    (apply orig-func args)))
+
+(advice-add 'y-or-n-p :around #'y-or-n-p-with-return)
 
 ;; smex
 (rc/require 'smex 'ido-completing-read+)
