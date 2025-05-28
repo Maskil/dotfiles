@@ -163,8 +163,8 @@
 ;; auto revert
 (global-auto-revert-mode t)
 
-(require 'simpc-mode)
-(add-to-list 'auto-mode-alist '("\\.[hc]\\(pp\\)?\\'" . simpc-mode))
+;; (require 'simpc-mode)
+;; (add-to-list 'auto-mode-alist '("\\.[hc]\\(pp\\)?\\'" . simpc-mode))
 
 (defun company-remove-dot-and-dotdot (candidates)
   "Remove `.` and `..` from the COMPANY completion CANDIDATES."
@@ -186,11 +186,99 @@
         (replace-match "" nil nil))
       (goto-char current))))
 
-(use-package grip-mode
-  :ensure t
-  :config (setq grip-use-mdopen t) ;; to use `mdopen` instead of `grip`
-  :bind (:map markdown-mode-command-map
-         ("g" . grip-mode)))
+(use-package markdown-mode
+  :hook ((markdown-mode . auto-fill-mode))
+  :mode ((".md\\'" . gfm-mode))
+  :config
+  (setq
+   markdown-enable-wiki-links t
+   markdown-italic-underscore t
+   markdown-asymmetric-header t
+   markdown-make-gfm-checkboxes-buttons t
+   markdown-gfm-uppercase-checkbox t
+   markdown-enable-math t
+   markdown-content-type "application/xhtml+xml"
+   markdown-css-paths '("https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown.min.css")
+   markdown-xhtml-header-content "
+      <style>
+      body {
+        box-sizing: border-box;
+        max-width: 1200px;
+        width: 100%;
+        margin: 40px auto;
+        padding: 0 10px;
+      }
+      </style>
+      <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        document.body.classList.add('markdown-body');
+      });
+      </script>
+      " ))
 
+(defun markdown-filter-impatient-mode (buffer)
+  "Markdown filter for impatient-mode"
+  (princ
+   (with-temp-buffer
+     (let ((tmpname (buffer-name)))
+       (set-buffer buffer)
+       (set-buffer (markdown tmpname))
+       (format "
+ <!DOCTYPE html>
+  <html>
+  <head>
+      <title>Markdown Preview</title>
+      <meta name='viewport' content=
+      'width=device-width, initial-scale=1'>
+      <link rel='stylesheet' href=
+      'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css'
+      integrity=
+      'sha512-Oy18vBnbSJkXTndr2n6lDMO5NN31UljR8e/ICzVPrGpSud4Gkckb8yUpqhKuUNoE+o9gAb4O/rAxxw1ojyUVzg=='
+      crossorigin='anonymous'>
+      <!-- https://github.com/sindresorhus/github-markdown-css -->
+      <link rel='stylesheet' href=
+      'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css'>
+      <!-- https://highlightjs.org -->
+
+      <style>
+      .markdown-body {
+          box-sizing: border-box;
+          margin: 0 auto;
+          max-width: 1200px;
+          min-width: 200px;
+          padding: 45px;
+       }
+
+       @media (max-width: 767px) {
+           .markdown-body {
+               padding: 15px;
+           }
+       }
+      </style>
+  </head>
+  <body>
+      <article class='markdown-body'>
+          %s
+      </article>
+      <script src=
+      'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js'></script>
+
+      <script>
+
+      hljs.highlightAll();
+      </script>
+  </body>
+  </html>"
+               (buffer-string))))
+   (current-buffer)))
+
+(defun md-preview ()
+  (interactive)
+  (impatient-mode)
+  (imp-set-user-filter `markdown-filter-impatient-mode)
+  (httpd-start)
+  (imp-visit-buffer))
+
+(add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
 (load-file custom-file)
 
