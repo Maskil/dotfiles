@@ -17,6 +17,8 @@
 ;; (add-to-list 'default-frame-alist `(font . "Sarasa Mono J"))
 (exec-path-from-shell-initialize)
 (set-face-attribute 'default nil :font "Sarasa Mono J" :height 132)
+(set-face-attribute 'variable-pitch nil :family "Sarasa Mono J")
+(set-face-attribute 'fixed-pitch nil :family "Sarasa Mono J")
 (set-frame-font "Sarasa Mono J" nil t)
 (menu-bar-mode 0)
 (tool-bar-mode 0)
