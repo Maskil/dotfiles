@@ -160,7 +160,7 @@
     (backward-kill-word 1)))
 
 ;; do not split window for error messages
-(setq same-window-regexps '("."))
+;; (setq same-window-regexps '("."))
 
 ;; auto revert
 (global-auto-revert-mode t)
