@@ -87,7 +87,7 @@
   (run-at-time 0.1 nil #'visual-line-mode 1))
 (add-hook 'eww-after-render-hook #'eww-redirect-reddit #'eww-enable-visual-line-mode)
 
-;;Compiling shit
+;; Compiling shit
 (global-set-key (kbd "<f7>") 'arduino-mode)
 (global-set-key (kbd "<f5>") 'compile)
 (global-set-key (kbd "<f6>") 'recompile)
