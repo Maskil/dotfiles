@@ -20,6 +20,7 @@
  '(highlight-indent-guides-character 124)
  '(highlight-indent-guides-method 'character)
  '(markdown-command "/usr/bin/pandoc")
+ '(mozc-candidate-style 'echo-area)
  '(package-selected-packages
    '(speed-type almost-mono-themes image+ yaml-mode dumb-jump impatient-mode markdown-mode gruber-darker-theme auctex-latexmk auctex magit exec-path-from-shell dash-functional dash))
  '(tex-fontify-script t))

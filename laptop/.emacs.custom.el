@@ -3,22 +3,22 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(compile-command "bash build.sh ")
+ '(custom-enabled-themes '(gruber-darker))
  '(custom-safe-themes
-   '("01a9797244146bbae39b18ef37e6f2ca5bebded90d9fe3a2f342a9e863aaa4fd" default))
- '(highlight-indent-guides-auto-character-face-perc 50)
+   '("e13beeb34b932f309fb2c360a04a460821ca99fe58f69e65557d6c1b10ba18c7"
+     default))
  '(highlight-indent-guides-character 124)
  '(highlight-indent-guides-method 'character)
- '(magit-bury-buffer-function 'magit-restore-window-configuration)
  '(package-selected-packages
-   '(company-jedi pdf-tools markdown-mode gruber-darker-theme auctex-latexmk auctex magit dash-functional dash)))
+   '(auctex-latexmk company company-jedi dash-functional debase
+                    discomfort ednc exec-path-from-shell exwm exwm-mff
+                    gnu-elpa-keyring-update gruber-darker-theme
+                    ido-completing-read+ magit mozc multiple-cursors
+                    pdf-tools smex xdg-appmenu)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(highlight-indent-guides-character-face ((t (:foreground "#1a801a801a80"))))
- '(highlight-indent-guides-stack-character-face ((t (:foreground "#bebebe"))))
- '(highlight-indent-guides-top-character-face ((t (:foreground "#bebebe"))))
- '(highlight-indent-guides-top-even-face ((t (:background "#bebebe")))))
+ )
 (put 'narrow-to-region 'disabled nil)
