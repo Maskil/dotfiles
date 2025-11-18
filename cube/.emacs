@@ -16,8 +16,8 @@
 ;; fundemental settings
 ;; (add-to-list 'default-frame-alist `(font . "Sarasa Mono J"))
 (exec-path-from-shell-initialize)
-(set-face-attribute 'default nil :font "Sarasa Mono J" :height 132)
-(set-frame-font "Sarasa Mono J" nil t)
+(set-face-attribute 'default nil :font "Sarasa Mono J" :height 140)
+(set-fontset-font "fontset-default" 'han "Sarasa Mono J")
 (menu-bar-mode 0)
 (tool-bar-mode 0)
 (setq inhibit-splash-screen 1)
@@ -129,6 +129,7 @@
 (setq reftx-plug-into-AUCTex t)
 (setq font-latex-fontify-script nil)
 (setq font-latex-fontify-sectioning 'color)
+(fset 'tex-font-lock-suscript 'ignore)
 (defalias 'japanese-change-line
   (kmacro "C-\\ % <return> C-\\"))
 (add-hook 'LaTeX-mode-hook (lambda () (local-set-key (kbd "C-c p") 'japanese-change-line)))
@@ -158,7 +159,7 @@
     (backward-kill-word 1)))
 
 ;; do not split window for error messages
-(setq same-window-regexps '("."))
+;; (setq same-window-regexps '("."))
 
 ;; auto revert
 (global-auto-revert-mode t)
@@ -278,6 +279,12 @@
   (imp-set-user-filter `markdown-filter-impatient-mode)
   (httpd-start)
   (imp-visit-buffer))
+
+(defun show-file-name ()
+  "Show the full path file name in the minibuffer."
+  (interactive)
+  (message (buffer-file-name)))
+(global-set-key [C-f1] 'show-file-name)
 
 (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
 (load-file custom-file)
