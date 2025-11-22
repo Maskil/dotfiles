@@ -1,3 +1,12 @@
+(defun my-configure-font (frame)
+  "Configure font given initial non-daemon FRAME.
+Intended for `after-make-frame-functions'."
+  (set-face-attribute 'default nil :font "Sarasa Mono J" :height 140)
+  (set-fontset-font "fontset-default" 'han "Sarasa Mono J"))
+
+(add-hook 'after-make-frame-functions #'my-configure-font)
+
+
 (package-initialize)
 (setq custom-file "~/.emacs.custom.el")
 (add-to-list 'load-path "~/.emacs.local/")
@@ -16,8 +25,7 @@
 ;; fundemental settings
 ;; (add-to-list 'default-frame-alist `(font . "Sarasa Mono J"))
 (exec-path-from-shell-initialize)
-(set-face-attribute 'default nil :font "Sarasa Mono J" :height 140)
-(set-fontset-font "fontset-default" 'han "Sarasa Mono J")
+
 (menu-bar-mode 0)
 (tool-bar-mode 0)
 (setq inhibit-splash-screen 1)
