@@ -6,7 +6,6 @@ Intended for `after-make-frame-functions'."
 
 (add-hook 'after-make-frame-functions #'my-configure-font)
 
-
 (package-initialize)
 (setq custom-file "~/.emacs.custom.el")
 (add-to-list 'load-path "~/.emacs.local/")
@@ -18,9 +17,6 @@ Intended for `after-make-frame-functions'."
 (rc/require 'auctex-latexmk)
 (add-to-list 'same-window-buffer-names "*compilation*")
 (add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
-
-;; theme
-;; (rc/require-theme 'sexy-monochrome)
 
 ;; fundemental settings
 ;; (add-to-list 'default-frame-alist `(font . "Sarasa Mono J"))
@@ -77,6 +73,8 @@ Intended for `after-make-frame-functions'."
 (rc/require 'pdf-tools)
 (pdf-loader-install)
 (add-hook 'pdf-tools-enabled-hook (lambda () (display-line-numbers-mode -1)))
+(setq pdf-cache-prefetch-delay nil)
+
 
 ;; render html
 (load-library "shr.el")
@@ -142,6 +140,7 @@ Intended for `after-make-frame-functions'."
   (kmacro "C-\\ % <return> C-\\"))
 (add-hook 'LaTeX-mode-hook (lambda () (local-set-key (kbd "C-c p") 'japanese-change-line)))
 (auctex-latexmk-setup)
+(add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
 
 ;; mozc japanese shit
 (rc/require 'mozc)
@@ -183,6 +182,9 @@ Intended for `after-make-frame-functions'."
               candidates))
 
 (setq company-transformers '(company-remove-dot-and-dotdot))
+
+(rc/require 'adaptive-wrap)
+(add-hook 'visual-line-mode-hook #'adaptive-wrap-prefix-mode)
 
 ;; remove trailing whitespaces
 (defun rm-trailing-spaces ()
