@@ -1,21 +1,9 @@
-;;; .emacs --- Emacs configuration (Elpaca-only) -*- lexical-binding: t; -*-
-
-;; ============================================================
-;; Fundamental UI (set early to avoid flash of vanilla UI)
-;; ============================================================
 (menu-bar-mode 0)
 (tool-bar-mode 0)
 (scroll-bar-mode 0)
 (setq inhibit-splash-screen t)
 (setq inhibit-startup-message t)
 
-;; Define package-archives so custom-file/rc.el don't error,
-;; without actually loading package.el (which conflicts with Elpaca).
-(defvar package-archives nil)
-
-;; ============================================================
-;; Elpaca Bootstrap (required — do not remove)
-;; ============================================================
 (defvar elpaca-installer-version 0.11)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
@@ -55,54 +43,32 @@
 (add-hook 'after-init-hook #'elpaca-process-queues)
 (elpaca `(,@elpaca-order))
 
-;; ============================================================
-;; use-package support for Elpaca
-;; ============================================================
 (elpaca elpaca-use-package
+  ;; Enable use-package :ensure support for Elpaca.
   (elpaca-use-package-mode))
-
-;; Make :ensure t the default so every use-package goes through Elpaca
 (setq use-package-always-ensure t)
 
-;; ============================================================
-;; Transient (install newer version before anything that needs it)
-;; ============================================================
-(elpaca transient)
-(elpaca dash-functional)
-(elpaca dash)
-(elpaca s)
+(elpaca 'gruber-darker-theme)
 
 ;; Block until the queued packages above are installed,
 ;; are installed, so the rest of the config can use use-package safely.
 (elpaca-wait)
 
-;; ============================================================
-;; Ensure directories exist for a fresh install
-;; ============================================================
-(dolist (dir '("~/.emacs-saves" "~/.emacs.local" "~/.emacs.rc"))
+(use-package gruber-darker-theme
+  :ensure nil
+  :config
+  (load-theme 'gruber-darker t))
+
+(dolist (dir '("~/.emacs-saves" "~/.emacs.local"))
   (unless (file-exists-p dir)
     (make-directory dir t)))
 
 (unless (file-exists-p "~/.emacs.custom.el")
   (with-temp-buffer (write-file "~/.emacs.custom.el")))
 
-;; ============================================================
-;; Custom file (loaded at the end so packages are available)
-;; ============================================================
-(setq custom-file "~/.emacs.custom.el")
-
-;; ============================================================
-;; Local config (rc system — only loaded if present)
-;; ============================================================
 (add-to-list 'load-path "~/.emacs.local/")
-(when (file-exists-p "~/.emacs.rc/rc.el")
-  (load-file "~/.emacs.rc/rc.el"))
 
-;; Helper: only call rc/require if the function exists
-(defun my/rc-require (&rest packages)
-  "Call rc/require if available, otherwise silently skip."
-  (when (fboundp 'rc/require)
-    (apply #'rc/require packages)))
+(setq custom-file "~/.emacs.custom.el")
 
 ;; ============================================================
 ;; Core packages
@@ -115,6 +81,9 @@
 (use-package flycheck
   :commands flycheck-mode)
 
+(use-package transient
+  :ensure (:repo "https://github.com/magit/transient.git"
+           :files (:defaults)))
 (use-package magit)
 
 (use-package company
@@ -166,9 +135,6 @@
   :config
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 
-;; ============================================================
-;; PDF Tools
-;; ============================================================
 (use-package pdf-tools
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :config
@@ -176,9 +142,6 @@
   (add-hook 'pdf-tools-enabled-hook (lambda () (display-line-numbers-mode -1)))
   (setq pdf-cache-prefetch-delay nil))
 
-;; ============================================================
-;; AUCTeX
-;; ============================================================
 (use-package auctex
   :ensure (:type git :host github :repo "emacs-straight/auctex"
            :branch "master"
@@ -210,18 +173,12 @@
 (with-eval-after-load 'latex
   (define-key LaTeX-mode-map (kbd "C-c p") 'japanese-change-line))
 
-;; ============================================================
-;; Mozc (Japanese input — Linux only, requires mozc_emacs_helper)
-;; ============================================================
 (when (eq system-type 'gnu/linux)
   (use-package mozc
     :config
     (setq default-input-method "japanese-mozc")))
 (prefer-coding-system 'utf-8)
 
-;; ============================================================
-;; Markdown
-;; ============================================================
 (use-package markdown-mode
   :mode ("\\.md\\'" . gfm-mode)
   :hook (markdown-mode . auto-fill-mode)
@@ -289,24 +246,15 @@ document.addEventListener('DOMContentLoaded', () => {
     (httpd-start)
     (imp-visit-buffer)))
 
-;; ============================================================
-;; Claude Code IDE
-;; ============================================================
 (use-package claude-code-ide
   :ensure (:type git :host github :repo "manzaltu/claude-code-ide.el")
   :bind ("C-c C-'" . claude-code-ide-menu)
   :config
   (claude-code-ide-emacs-tools-setup))
 
-;; ============================================================
-;; MATLAB
-;; ============================================================
 (use-package matlab-mode
   :mode ("\\.m\\'" . matlab-mode))
 
-;; ============================================================
-;; Font configuration
-;; ============================================================
 (defun my-configure-font (frame)
   "Configure font for FRAME (works with daemon and non-daemon)."
   (with-selected-frame frame
@@ -317,13 +265,10 @@ document.addEventListener('DOMContentLoaded', () => {
     (add-hook 'after-make-frame-functions #'my-configure-font)
   (add-hook 'after-init-hook (lambda () (my-configure-font (selected-frame)))))
 
-;; EWW font
+;; EWW
 (with-eval-after-load 'eww
   (set-face-attribute 'shr-text nil :family "Sarasa Mono J" :height 135))
 
-;; ============================================================
-;; EWW utilities
-;; ============================================================
 (defun eww-save-image (filename)
   "Save an image opened in an *eww* buffer to FILENAME."
   (interactive "G")
@@ -433,9 +378,5 @@ document.addEventListener('DOMContentLoaded', () => {
   (interactive)
   (message (buffer-file-name)))
 
-;; ============================================================
-;; Load custom file last (after all packages are declared)
-;; ============================================================
 (load custom-file 'noerror)
 
-;;; .emacs ends here
