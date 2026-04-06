@@ -9,12 +9,14 @@
      default))
  '(highlight-indent-guides-character 124)
  '(highlight-indent-guides-method 'character)
+ '(mozc-candidate-style 'echo-area)
  '(package-selected-packages
    '(auctex-latexmk company company-jedi dash-functional debase
-                    discomfort ednc exec-path-from-shell exwm exwm-mff
-                    gnu-elpa-keyring-update gruber-darker-theme
-                    ido-completing-read+ magit mozc multiple-cursors
-                    pdf-tools smex xdg-appmenu)))
+                    discomfort ednc empv exec-path-from-shell exwm
+                    exwm-mff gnu-elpa-keyring-update
+                    gruber-darker-theme ido-completing-read+ magit
+                    mozc multiple-cursors pdf-tools smex vterm
+                    xdg-appmenu zotxt)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
