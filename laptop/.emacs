@@ -1,3 +1,11 @@
+(defun my-configure-font (frame)
+  "Configure font given initial non-daemon FRAME.
+Intended for `after-make-frame-functions'."
+  (set-face-attribute 'default nil :font "Sarasa Mono J" :height 140)
+  (set-fontset-font "fontset-default" 'han "Sarasa Mono J"))
+
+(add-hook 'after-make-frame-functions #'my-configure-font)
+
 (package-initialize)
 (setq custom-file "~/.emacs.custom.el")
 (add-to-list 'load-path "~/.emacs.local/")
@@ -15,7 +23,7 @@
 (add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
 
 (display-battery-mode 1)
-(setq battery-mode-line-format " [BTR %p%%]")
+(setq battery-mode-line-format "[BTR %p%%]")
 
 ;; fundemental settings
 ;; (add-to-list 'default-frame-alist `(font . "Sarasa Mono J"))
@@ -291,6 +299,14 @@
   (httpd-start)
   (imp-visit-buffer))
 
+;; (require 'mu4e)
+;; (setq mu4e-maildir "~/maildir")  ; Path to your Maildir
+;; (setq mu4e-get-mail-command "mbsync --config ~/.emacs.d/.mbsyncrc nameaccount")
+;; (setq mu4e-update-interval 300)  ; Update interval in seconds
+
+(setq empv-mpv-args '("--vo=x11" "--force-window=yes"))
+
 (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
 (load-file custom-file)
 
+(put 'list-timers 'disabled nil)
