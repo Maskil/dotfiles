@@ -3,6 +3,8 @@
 (scroll-bar-mode 0)
 (setq inhibit-splash-screen t)
 (setq inhibit-startup-message t)
+(setenv "LANG" "en_US.UTF-8")
+(setenv "DICTIONARY" "en_US")
 
 (defvar elpaca-installer-version 0.11)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
@@ -116,6 +118,7 @@
   :config
   (ido-ubiquitous-mode 1))
 
+(elpaca virtual-auto-fill)
 (use-package adaptive-wrap
   :hook (visual-line-mode . adaptive-wrap-prefix-mode))
 
@@ -379,4 +382,3 @@ document.addEventListener('DOMContentLoaded', () => {
   (message (buffer-file-name)))
 
 (load custom-file 'noerror)
-
