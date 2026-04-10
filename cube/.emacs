@@ -53,7 +53,6 @@
 (elpaca 'ef-themes)
 (elpaca dimmer)
 (elpaca vterm)
-(elpaca virtual-auto-fill)
 
 ;; Block until the queued packages above are installed,
 ;; are installed, so the rest of the config can use use-package safely.
