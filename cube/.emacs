@@ -48,16 +48,16 @@
   (elpaca-use-package-mode))
 (setq use-package-always-ensure t)
 
-(elpaca 'gruber-darker-theme)
+(elpaca 'ef-themes)
+(elpaca dimmer)
+(elpaca vterm)
+(elpaca virtual-auto-fill)
 
 ;; Block until the queued packages above are installed,
 ;; are installed, so the rest of the config can use use-package safely.
 (elpaca-wait)
 
-(use-package gruber-darker-theme
-  :ensure nil
-  :config
-  (load-theme 'gruber-darker t))
+(load-theme 'ef-melissa-dark t)
 
 (dolist (dir '("~/.emacs-saves" "~/.emacs.local"))
   (unless (file-exists-p dir)
