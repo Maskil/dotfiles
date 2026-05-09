@@ -143,7 +143,11 @@
   :config
   (pdf-loader-install)
   (add-hook 'pdf-tools-enabled-hook (lambda () (display-line-numbers-mode -1)))
+  (add-hook 'pdf-view-mode-hook
+          (lambda ()
+            (display-line-numbers-mode -1)))
   (setq pdf-cache-prefetch-delay nil))
+
 
 (use-package auctex
   :ensure (:type git :host github :repo "emacs-straight/auctex"
