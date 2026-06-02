@@ -10,19 +10,17 @@
  '(compile-command "bash build.sh ")
  '(custom-enabled-themes '(ef-melissa-dark gruber-darker))
  '(custom-safe-themes
-   '("bfe496f60aa427b47e71cfd9c0fba269004066d490c8b9679d786459df2adc7f" "e27c9668d7eddf75373fa6b07475ae2d6892185f07ebed037eedf783318761d7"
-     "01a9797244146bbae39b18ef37e6f2ca5bebded90d9fe3a2f342a9e863aaa4fd" "7c83927617afdf71cc90801ffee5965939505b7cfecdcbe15961fc32a0d9bd02" default))
- '(fill-column 200)
+   '("bfe496f60aa427b47e71cfd9c0fba269004066d490c8b9679d786459df2adc7f" "e27c9668d7eddf75373fa6b07475ae2d6892185f07ebed037eedf783318761d7" "01a9797244146bbae39b18ef37e6f2ca5bebded90d9fe3a2f342a9e863aaa4fd" "7c83927617afdf71cc90801ffee5965939505b7cfecdcbe15961fc32a0d9bd02" default))
+ '(fill-column 100)
  '(font-latex-fontify-script nil)
  '(font-latex-fontify-sectioning 'color)
  '(highlight-indent-guides-character 124)
  '(highlight-indent-guides-method 'character)
  '(mozc-candidate-style 'echo-area)
  '(package-selected-packages
-   '(magit-vcsh magit gruber-darker-theme markdown-mode yaml-mode vterm php-mode adaptive-wrap dumb-jump smex pdf-tools multiple-cursors mozc ido-completing-read+ exec-path-from-shell dash-functional
-                company-jedi auctex-latexmk))
+   '(magit-vcsh magit gruber-darker-theme markdown-mode yaml-mode vterm php-mode adaptive-wrap dumb-jump smex pdf-tools multiple-cursors mozc ido-completing-read+ exec-path-from-shell dash-functional company-jedi auctex-latexmk))
  '(tex-fontify-script nil)
- '(warning-suppress-log-types '((emacs) (comp))))
+ '(warning-suppress-log-types '((pdf-view) (jedi) (emacs) (comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
