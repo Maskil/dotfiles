@@ -6,15 +6,15 @@
 (setenv "LANG" "en_US.UTF-8")
 (setenv "DICTIONARY" "en_US")
 
-(defvar elpaca-installer-version 0.11)
+(defvar elpaca-installer-version 0.12)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
-(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+(defvar elpaca-sources-directory (expand-file-name "sources/" elpaca-directory))
 (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil :depth 1 :inherit ignore
+                              :ref "27c2889f66368bde12b4e243582e343ed9cb75e3" :depth 1 :inherit ignore
                               :files (:defaults "elpaca-test.el" (:exclude "extensions"))
-                              :build (:not elpaca--activate-package)))
-(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+                              :build (:not elpaca-activate)))
+(let* ((repo  (expand-file-name "elpaca/" elpaca-sources-directory))
        (build (expand-file-name "elpaca/" elpaca-builds-directory))
        (order (cdr elpaca-order))
        (default-directory repo))
@@ -44,6 +44,7 @@
     (let ((load-source-file-function nil)) (load "./elpaca-autoloads"))))
 (add-hook 'after-init-hook #'elpaca-process-queues)
 (elpaca `(,@elpaca-order))
+(setq elpaca-log-functions nil)
 
 (elpaca elpaca-use-package
   ;; Enable use-package :ensure support for Elpaca.
@@ -107,7 +108,10 @@
   (add-hook 'python-mode-hook 'jedi:setup))
 
 (use-package multiple-cursors
-  :bind (("C-S-c C-S-c" . mc/edit-lines)))
+  :bind (("C-S-c C-S-c" . mc/edit-lines)
+         ("C->" . 'mc/mark-next-like-this)
+         ("C-<" . 'mc/mark-previous-like-this)
+         ("C-c C-<" . 'mc/mark-all-like-this)))
 
 (use-package smex
   :bind (("M-x" . smex)
@@ -141,10 +145,13 @@
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :config
   (pdf-loader-install)
+<<<<<<< HEAD
+=======
   (add-hook 'pdf-tools-enabled-hook (lambda () (display-line-numbers-mode -1)))
   (add-hook 'pdf-view-mode-hook
           (lambda ()
             (display-line-numbers-mode -1)))
+>>>>>>> origin/master
   (setq pdf-cache-prefetch-delay nil))
 
 
@@ -342,7 +349,16 @@ document.addEventListener('DOMContentLoaded', () => {
 (setq compilation-environment '("TERM=xterm-256color"))
 (setq ring-bell-function 'ignore)
 (setq display-line-numbers-type 'relative)
-(global-display-line-numbers-mode)
+(defcustom my/display-line-numbers-exempt-modes '(pdf-view-mode)
+  "Major modes in which `display-line-numbers-mode' should stay off."
+  :type '(repeat symbol))
+(define-globalized-minor-mode my/global-display-line-numbers-mode
+  display-line-numbers-mode
+  (lambda ()
+    (unless (or (minibufferp)
+                (apply #'derived-mode-p my/display-line-numbers-exempt-modes))
+      (display-line-numbers-mode))))
+(my/global-display-line-numbers-mode)
 
 ;; Temp/backup files
 (setq auto-save-file-name-transforms `((".*" "~/.emacs-saves/" t)))
