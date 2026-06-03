@@ -83,6 +83,10 @@
 (use-package flycheck
   :commands flycheck-mode)
 
+(use-package compat
+  :ensure (:repo "https://github.com/emacs-compat/compat.git"
+           :files (:defaults "compat-*.el")))
+(use-package llama)
 (use-package transient
   :ensure (:repo "https://github.com/magit/transient.git"
            :files (:defaults)))
