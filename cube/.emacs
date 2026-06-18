@@ -1,7 +1,6 @@
 (menu-bar-mode 0)
 (tool-bar-mode 0)
 (scroll-bar-mode 0)
-(setq-default auto-fill-function #'do-auto-fill)
 (setq inhibit-splash-screen t)
 (setq inhibit-startup-message t)
 (setenv "LANG" "en_US.UTF-8")
@@ -129,9 +128,17 @@
   :config
   (ido-ubiquitous-mode 1))
 
-(elpaca virtual-auto-fill)
-(use-package adaptive-wrap
-  :hook (visual-line-mode . adaptive-wrap-prefix-mode))
+(setq-default auto-fill-function nil)
+(global-visual-line-mode 1)
+(setq-default word-wrap-by-category t)
+(require 'kinsoku)
+(use-package visual-fill-column
+  :ensure t
+  :hook (visual-line-mode . visual-fill-column-mode)
+  :custom
+  (visual-fill-column-width nil))
+(global-visual-wrap-prefix-mode 1)
+(setq-default visual-wrap-extra-indent 0)
 
 (use-package highlight-indent-guides
   :hook (prog-mode . highlight-indent-guides-mode)
