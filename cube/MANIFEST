@@ -2,3 +2,4 @@
 .emacs.custom.el|symlink|
 .emacs.rc|symlink|
 .emacs|symlink|
+.tmux.conf|symlink|

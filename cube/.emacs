@@ -1,6 +1,7 @@
 (menu-bar-mode 0)
 (tool-bar-mode 0)
 (scroll-bar-mode 0)
+(setq-default auto-fill-function #'do-auto-fill)
 (setq inhibit-splash-screen t)
 (setq inhibit-startup-message t)
 (setenv "LANG" "en_US.UTF-8")
@@ -53,6 +54,9 @@
 
 (elpaca 'ef-themes)
 (elpaca dimmer)
+(when (eq system-type 'darwin)
+  (setq shell-file-name "/opt/homebrew/bin/bash")
+  (setq vterm-shell "/opt/homebrew/bin/bash"))
 (elpaca vterm)
 
 ;; Block until the queued packages above are installed,
@@ -149,15 +153,9 @@
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :config
   (pdf-loader-install)
-<<<<<<< HEAD
-=======
-  (add-hook 'pdf-tools-enabled-hook (lambda () (display-line-numbers-mode -1)))
-  (add-hook 'pdf-view-mode-hook
-          (lambda ()
-            (display-line-numbers-mode -1)))
->>>>>>> origin/master
-  (setq pdf-cache-prefetch-delay nil))
-
+  :hook
+  (pdf-view-mode . (lambda ()
+                     (display-line-numbers-mode -1))))
 
 (use-package auctex
   :ensure (:type git :host github :repo "emacs-straight/auctex"
@@ -190,10 +188,9 @@
 (with-eval-after-load 'latex
   (define-key LaTeX-mode-map (kbd "C-c p") 'japanese-change-line))
 
-(when (eq system-type 'gnu/linux)
-  (use-package mozc
-    :config
-    (setq default-input-method "japanese-mozc")))
+(use-package mozc
+  :config
+  (setq default-input-method "japanese-mozc"))
 (prefer-coding-system 'utf-8)
 
 (use-package markdown-mode
