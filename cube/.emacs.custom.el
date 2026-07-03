@@ -24,7 +24,7 @@
    '(magit-vcsh magit gruber-darker-theme markdown-mode yaml-mode vterm php-mode adaptive-wrap dumb-jump smex pdf-tools multiple-cursors mozc
                 ido-completing-read+ exec-path-from-shell dash-functional company-jedi auctex-latexmk))
  '(tex-fontify-script nil)
- '(warning-suppress-log-types '((comp))))
+ '(warning-suppress-log-types '((native-compiler) (comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

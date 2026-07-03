@@ -57,6 +57,7 @@
   (setq shell-file-name "/opt/homebrew/bin/bash")
   (setq vterm-shell "/opt/homebrew/bin/bash"))
 (elpaca vterm)
+(elpaca agent-shell)
 
 ;; Block until the queued packages above are installed,
 ;; are installed, so the rest of the config can use use-package safely.
@@ -139,6 +140,20 @@
   (visual-fill-column-width nil))
 (global-visual-wrap-prefix-mode 1)
 (setq-default visual-wrap-extra-indent 0)
+;; disable wrapping for pdf
+(defun my-disable-visual-wrapping-in-pdf ()
+  (when (derived-mode-p 'pdf-view-mode)
+    (visual-line-mode -1)
+
+    (when (bound-and-true-p visual-fill-column-mode)
+      (visual-fill-column-mode -1))
+
+    (when (bound-and-true-p visual-wrap-prefix-mode)
+      (visual-wrap-prefix-mode -1))))
+
+(add-hook 'after-change-major-mode-hook
+          #'my-disable-visual-wrapping-in-pdf
+          100)
 
 (use-package highlight-indent-guides
   :hook (prog-mode . highlight-indent-guides-mode)
@@ -183,12 +198,13 @@
   (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
   (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
-  (setq reftex-plug-into-AUCTeX t))
+  (setq reftex-plug-into-AUCTeX t)
 
-(use-package auctex-latexmk
-  :after auctex
-  :config
-  (auctex-latexmk-setup))
+  ;; --- make C-c C-a use latexmk, letting latexmkrc pick the engine ---
+  (add-to-list 'TeX-command-list
+               '("LatexMk" "latexmk %t" TeX-run-TeX nil t
+                 :help "Run latexmk; engine & pdf-mode come from latexmkrc"))
+  (setq-default TeX-command-default "LatexMk"))
 
 (defalias 'japanese-change-line
   (kmacro "C-\\ % <return> C-\\"))
@@ -273,6 +289,59 @@ document.addEventListener('DOMContentLoaded', () => {
   :config
   (claude-code-ide-emacs-tools-setup))
 
+;; --- Make the Claude Code vterm window scrollable --------------------------
+;;
+;; Root cause: Claude Code's default TUI renderer draws on the terminal's
+;; *alternate screen* (it emits ESC[?1049h -- verified against the running
+;; CLI).  The alternate screen has no scrollback, so the vterm buffer only ever
+;; holds the current screenful and there is literally nothing above to scroll
+;; to.  (The `vterm-scroll-to-bottom-on-output' the package sets does not exist
+;; in upstream emacs-libvterm, so it is a no-op and unrelated.)
+;;
+;; Fix 1 -- the real one: force Claude's classic main-screen renderer for
+;; sessions launched from Emacs, so finished output flows into vterm's
+;; scrollback and the window becomes scrollable.  Equivalent to setting
+;; "tui": "default" in ~/.claude/settings.json, but scoped to Emacs.  Only
+;; affects NEW Claude sessions -- restart any session that is already running.
+(setenv "CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN" "1")
+
+;; Fix 2 -- refinement: with the classic renderer, vterm still follows the
+;; cursor on every repaint, so scrolling up *while Claude is streaming* would
+;; snap you back to the bottom.  Preserve the scroll position of any Claude
+;; window you have scrolled away from the bottom; scroll back down to resume
+;; live following.  (vterm's built-in alternative is `vterm-copy-mode' /
+;; C-c C-t.)
+(defun my/claude-vterm-keep-scroll-position (orig-fun buffer)
+  "Around advice for `vterm--delayed-redraw' preserving Claude scroll position.
+ORIG-FUN is `vterm--delayed-redraw'; BUFFER is the vterm buffer it redraws."
+  (if (not (and (buffer-live-p buffer)
+                (string-prefix-p "*claude-code" (buffer-name buffer))))
+      (funcall orig-fun buffer)
+    (let (saved)
+      (with-current-buffer buffer
+        (unless (bound-and-true-p vterm-copy-mode)
+          (dolist (win (get-buffer-window-list buffer nil t))
+            ;; PARTIALLY = t so a partially-visible last line still counts as
+            ;; "at the bottom" and never freezes live following by accident.
+            (unless (pos-visible-in-window-p (point-max) win t)
+              (push (list win
+                          (copy-marker (window-start win))
+                          (copy-marker (window-point win)))
+                    saved)))))
+      (unwind-protect
+          (funcall orig-fun buffer)
+        (dolist (entry saved)
+          (pcase-let ((`(,win ,start ,pt) entry))
+            (when (window-live-p win)
+              (set-window-point win (marker-position pt))
+              (set-window-start win (marker-position start) t))
+            (set-marker start nil)
+            (set-marker pt nil)))))))
+
+(with-eval-after-load 'vterm
+  (advice-add 'vterm--delayed-redraw :around
+              #'my/claude-vterm-keep-scroll-position))
+
 (use-package codex-cli
   :ensure t
   :bind (("C-c c t" . codex-cli-toggle)
@@ -298,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
 (defun my-configure-font (frame)
   "Configure font for FRAME (works with daemon and non-daemon)."
   (with-selected-frame frame
-    (set-face-attribute 'default nil :font "Sarasa Mono J" :height 135)
+    (set-face-attribute 'default nil :font "Sarasa Mono J" :height 155)
     (set-fontset-font "fontset-default" 'han "Sarasa Mono J")))
 
 (if (daemonp)
@@ -381,7 +450,9 @@ document.addEventListener('DOMContentLoaded', () => {
 (global-set-key (kbd "C-\\") 'toggle-input-method)
 (global-set-key (kbd "s-<up>") 'toggle-frame-maximized)
 (global-set-key (kbd "<C-prior>") #'previous-buffer)
+(global-set-key (kbd "C-{") #'previous-buffer)
 (global-set-key (kbd "<C-next>")  #'next-buffer)
+(global-set-key (kbd "C-}")  #'next-buffer)
 (global-set-key (kbd "<f5>") 'compile)
 (global-set-key (kbd "<f6>") 'recompile)
 (global-set-key (kbd "<f7>") 'arduino-mode)
