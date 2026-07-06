@@ -201,10 +201,11 @@
   (setq reftex-plug-into-AUCTeX t)
 
   ;; --- make C-c C-a use latexmk, letting latexmkrc pick the engine ---
-  (add-to-list 'TeX-command-list
-               '("LatexMk" "latexmk %t" TeX-run-TeX nil t
-                 :help "Run latexmk; engine & pdf-mode come from latexmkrc"))
-  (setq-default TeX-command-default "LatexMk"))
+  (with-eval-after-load 'tex
+    (add-to-list 'TeX-command-list
+                 '("LatexMk" "latexmk %t" TeX-run-TeX nil t
+                   :help "Run latexmk; engine & pdf-mode come from latexmkrc"))
+    (setq-default TeX-command-default "LatexMk")))
 
 (defalias 'japanese-change-line
   (kmacro "C-\\ % <return> C-\\"))
@@ -283,12 +284,6 @@ document.addEventListener('DOMContentLoaded', () => {
     (httpd-start)
     (imp-visit-buffer)))
 
-(use-package claude-code-ide
-  :ensure (:type git :host github :repo "manzaltu/claude-code-ide.el")
-  :bind ("C-c C-'" . claude-code-ide-menu)
-  :config
-  (claude-code-ide-emacs-tools-setup))
-
 ;; --- Make the Claude Code vterm window scrollable --------------------------
 ;;
 ;; Root cause: Claude Code's default TUI renderer draws on the terminal's
@@ -341,25 +336,6 @@ ORIG-FUN is `vterm--delayed-redraw'; BUFFER is the vterm buffer it redraws."
 (with-eval-after-load 'vterm
   (advice-add 'vterm--delayed-redraw :around
               #'my/claude-vterm-keep-scroll-position))
-
-(use-package codex-cli
-  :ensure t
-  :bind (("C-c c t" . codex-cli-toggle)
-         ("C-c c s" . codex-cli-start)
-         ("C-c c q" . codex-cli-stop)
-         ("C-c c Q" . codex-cli-stop-all)
-         ("C-c c p" . codex-cli-send-prompt)
-         ("C-c c r" . codex-cli-send-region)
-         ("C-c c f" . codex-cli-send-file)
-         ;; Show-all layout + paging
-         ("C-c c a" . codex-cli-toggle-all)
-         ("C-c c n" . codex-cli-toggle-all-next-page)
-         ("C-c c b" . codex-cli-toggle-all-prev-page))
-  :init
-  (setq codex-cli-executable "codex"
-        codex-cli-terminal-backend 'vterm
-        codex-cli-side 'right
-        codex-cli-width 90))
 
 (use-package matlab-mode
   :mode ("\\.m\\'" . matlab-mode))
