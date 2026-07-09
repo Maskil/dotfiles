@@ -206,6 +206,12 @@
                  :help "Run latexmk; engine & pdf-mode come from latexmkrc"))
   (setq-default TeX-command-default "LatexMk"))
 
+;; typst
+(with-eval-after-load 'treesit
+  (add-to-list
+   'treesit-language-source-alist
+   '(typst "https://github.com/uben0/tree-sitter-typst")))
+
 (defalias 'japanese-change-line
   (kmacro "C-\\ % <return> C-\\"))
 (with-eval-after-load 'latex
