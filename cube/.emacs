@@ -3,16 +3,18 @@
 (scroll-bar-mode 0)
 (setq inhibit-splash-screen t)
 (setq inhibit-startup-message t)
+(setenv "LANG" "en_US.UTF-8")
+(setenv "DICTIONARY" "en_US")
 
-(defvar elpaca-installer-version 0.11)
+(defvar elpaca-installer-version 0.12)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
-(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+(defvar elpaca-sources-directory (expand-file-name "sources/" elpaca-directory))
 (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil :depth 1 :inherit ignore
+                              :ref "27c2889f66368bde12b4e243582e343ed9cb75e3" :depth 1 :inherit ignore
                               :files (:defaults "elpaca-test.el" (:exclude "extensions"))
-                              :build (:not elpaca--activate-package)))
-(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+                              :build (:not elpaca-activate)))
+(let* ((repo  (expand-file-name "elpaca/" elpaca-sources-directory))
        (build (expand-file-name "elpaca/" elpaca-builds-directory))
        (order (cdr elpaca-order))
        (default-directory repo))
@@ -42,22 +44,26 @@
     (let ((load-source-file-function nil)) (load "./elpaca-autoloads"))))
 (add-hook 'after-init-hook #'elpaca-process-queues)
 (elpaca `(,@elpaca-order))
+(setq elpaca-log-functions nil)
 
 (elpaca elpaca-use-package
   ;; Enable use-package :ensure support for Elpaca.
   (elpaca-use-package-mode))
 (setq use-package-always-ensure t)
 
-(elpaca 'gruber-darker-theme)
+(elpaca 'ef-themes)
+(elpaca dimmer)
+(when (eq system-type 'darwin)
+  (setq shell-file-name "/opt/homebrew/bin/bash")
+  (setq vterm-shell "/opt/homebrew/bin/bash"))
+(elpaca vterm)
+(elpaca agent-shell)
 
 ;; Block until the queued packages above are installed,
 ;; are installed, so the rest of the config can use use-package safely.
 (elpaca-wait)
 
-(use-package gruber-darker-theme
-  :ensure nil
-  :config
-  (load-theme 'gruber-darker t))
+(load-theme 'ef-melissa-dark t)
 
 (dolist (dir '("~/.emacs-saves" "~/.emacs.local"))
   (unless (file-exists-p dir)
@@ -81,6 +87,10 @@
 (use-package flycheck
   :commands flycheck-mode)
 
+(use-package compat
+  :ensure (:repo "https://github.com/emacs-compat/compat.git"
+           :files (:defaults "compat-*.el")))
+(use-package llama)
 (use-package transient
   :ensure (:repo "https://github.com/magit/transient.git"
            :files (:defaults)))
@@ -106,7 +116,10 @@
   (add-hook 'python-mode-hook 'jedi:setup))
 
 (use-package multiple-cursors
-  :bind (("C-S-c C-S-c" . mc/edit-lines)))
+  :bind (("C-S-c C-S-c" . mc/edit-lines)
+         ("C->" . 'mc/mark-next-like-this)
+         ("C-<" . 'mc/mark-previous-like-this)
+         ("C-c C-<" . 'mc/mark-all-like-this)))
 
 (use-package smex
   :bind (("M-x" . smex)
@@ -116,8 +129,31 @@
   :config
   (ido-ubiquitous-mode 1))
 
-(use-package adaptive-wrap
-  :hook (visual-line-mode . adaptive-wrap-prefix-mode))
+(setq-default auto-fill-function nil)
+(global-visual-line-mode 1)
+(setq-default word-wrap-by-category t)
+(require 'kinsoku)
+(use-package visual-fill-column
+  :ensure t
+  :hook (visual-line-mode . visual-fill-column-mode)
+  :custom
+  (visual-fill-column-width nil))
+(global-visual-wrap-prefix-mode 1)
+(setq-default visual-wrap-extra-indent 0)
+;; disable wrapping for pdf
+(defun my-disable-visual-wrapping-in-pdf ()
+  (when (derived-mode-p 'pdf-view-mode)
+    (visual-line-mode -1)
+
+    (when (bound-and-true-p visual-fill-column-mode)
+      (visual-fill-column-mode -1))
+
+    (when (bound-and-true-p visual-wrap-prefix-mode)
+      (visual-wrap-prefix-mode -1))))
+
+(add-hook 'after-change-major-mode-hook
+          #'my-disable-visual-wrapping-in-pdf
+          100)
 
 (use-package highlight-indent-guides
   :hook (prog-mode . highlight-indent-guides-mode)
@@ -139,8 +175,9 @@
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :config
   (pdf-loader-install)
-  (add-hook 'pdf-tools-enabled-hook (lambda () (display-line-numbers-mode -1)))
-  (setq pdf-cache-prefetch-delay nil))
+  :hook
+  (pdf-view-mode . (lambda ()
+                     (display-line-numbers-mode -1))))
 
 (use-package auctex
   :ensure (:type git :host github :repo "emacs-straight/auctex"
@@ -161,22 +198,29 @@
   (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
   (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
-  (setq reftex-plug-into-AUCTeX t))
+  (setq reftex-plug-into-AUCTeX t)
 
-(use-package auctex-latexmk
-  :after auctex
-  :config
-  (auctex-latexmk-setup))
+  ;; --- make C-c C-a use latexmk, letting latexmkrc pick the engine ---
+  (with-eval-after-load 'tex
+    (add-to-list 'TeX-command-list
+                 '("LatexMk" "latexmk %t" TeX-run-TeX nil t
+                   :help "Run latexmk; engine & pdf-mode come from latexmkrc"))
+    (setq-default TeX-command-default "LatexMk")))
+
+;; typst
+(with-eval-after-load 'treesit
+  (add-to-list
+   'treesit-language-source-alist
+   '(typst "https://github.com/uben0/tree-sitter-typst")))
 
 (defalias 'japanese-change-line
   (kmacro "C-\\ % <return> C-\\"))
 (with-eval-after-load 'latex
   (define-key LaTeX-mode-map (kbd "C-c p") 'japanese-change-line))
 
-(when (eq system-type 'gnu/linux)
-  (use-package mozc
-    :config
-    (setq default-input-method "japanese-mozc")))
+(use-package mozc
+  :config
+  (setq default-input-method "japanese-mozc"))
 (prefer-coding-system 'utf-8)
 
 (use-package markdown-mode
@@ -246,11 +290,58 @@ document.addEventListener('DOMContentLoaded', () => {
     (httpd-start)
     (imp-visit-buffer)))
 
-(use-package claude-code-ide
-  :ensure (:type git :host github :repo "manzaltu/claude-code-ide.el")
-  :bind ("C-c C-'" . claude-code-ide-menu)
-  :config
-  (claude-code-ide-emacs-tools-setup))
+;; --- Make the Claude Code vterm window scrollable --------------------------
+;;
+;; Root cause: Claude Code's default TUI renderer draws on the terminal's
+;; *alternate screen* (it emits ESC[?1049h -- verified against the running
+;; CLI).  The alternate screen has no scrollback, so the vterm buffer only ever
+;; holds the current screenful and there is literally nothing above to scroll
+;; to.  (The `vterm-scroll-to-bottom-on-output' the package sets does not exist
+;; in upstream emacs-libvterm, so it is a no-op and unrelated.)
+;;
+;; Fix 1 -- the real one: force Claude's classic main-screen renderer for
+;; sessions launched from Emacs, so finished output flows into vterm's
+;; scrollback and the window becomes scrollable.  Equivalent to setting
+;; "tui": "default" in ~/.claude/settings.json, but scoped to Emacs.  Only
+;; affects NEW Claude sessions -- restart any session that is already running.
+(setenv "CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN" "1")
+
+;; Fix 2 -- refinement: with the classic renderer, vterm still follows the
+;; cursor on every repaint, so scrolling up *while Claude is streaming* would
+;; snap you back to the bottom.  Preserve the scroll position of any Claude
+;; window you have scrolled away from the bottom; scroll back down to resume
+;; live following.  (vterm's built-in alternative is `vterm-copy-mode' /
+;; C-c C-t.)
+(defun my/claude-vterm-keep-scroll-position (orig-fun buffer)
+  "Around advice for `vterm--delayed-redraw' preserving Claude scroll position.
+ORIG-FUN is `vterm--delayed-redraw'; BUFFER is the vterm buffer it redraws."
+  (if (not (and (buffer-live-p buffer)
+                (string-prefix-p "*claude-code" (buffer-name buffer))))
+      (funcall orig-fun buffer)
+    (let (saved)
+      (with-current-buffer buffer
+        (unless (bound-and-true-p vterm-copy-mode)
+          (dolist (win (get-buffer-window-list buffer nil t))
+            ;; PARTIALLY = t so a partially-visible last line still counts as
+            ;; "at the bottom" and never freezes live following by accident.
+            (unless (pos-visible-in-window-p (point-max) win t)
+              (push (list win
+                          (copy-marker (window-start win))
+                          (copy-marker (window-point win)))
+                    saved)))))
+      (unwind-protect
+          (funcall orig-fun buffer)
+        (dolist (entry saved)
+          (pcase-let ((`(,win ,start ,pt) entry))
+            (when (window-live-p win)
+              (set-window-point win (marker-position pt))
+              (set-window-start win (marker-position start) t))
+            (set-marker start nil)
+            (set-marker pt nil)))))))
+
+(with-eval-after-load 'vterm
+  (advice-add 'vterm--delayed-redraw :around
+              #'my/claude-vterm-keep-scroll-position))
 
 (use-package matlab-mode
   :mode ("\\.m\\'" . matlab-mode))
@@ -258,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
 (defun my-configure-font (frame)
   "Configure font for FRAME (works with daemon and non-daemon)."
   (with-selected-frame frame
-    (set-face-attribute 'default nil :font "Sarasa Mono J" :height 135)
+    (set-face-attribute 'default nil :font "Sarasa Mono J" :height 155)
     (set-fontset-font "fontset-default" 'han "Sarasa Mono J")))
 
 (if (daemonp)
@@ -317,7 +408,16 @@ document.addEventListener('DOMContentLoaded', () => {
 (setq compilation-environment '("TERM=xterm-256color"))
 (setq ring-bell-function 'ignore)
 (setq display-line-numbers-type 'relative)
-(global-display-line-numbers-mode)
+(defcustom my/display-line-numbers-exempt-modes '(pdf-view-mode)
+  "Major modes in which `display-line-numbers-mode' should stay off."
+  :type '(repeat symbol))
+(define-globalized-minor-mode my/global-display-line-numbers-mode
+  display-line-numbers-mode
+  (lambda ()
+    (unless (or (minibufferp)
+                (apply #'derived-mode-p my/display-line-numbers-exempt-modes))
+      (display-line-numbers-mode))))
+(my/global-display-line-numbers-mode)
 
 ;; Temp/backup files
 (setq auto-save-file-name-transforms `((".*" "~/.emacs-saves/" t)))
@@ -332,7 +432,9 @@ document.addEventListener('DOMContentLoaded', () => {
 (global-set-key (kbd "C-\\") 'toggle-input-method)
 (global-set-key (kbd "s-<up>") 'toggle-frame-maximized)
 (global-set-key (kbd "<C-prior>") #'previous-buffer)
+(global-set-key (kbd "C-{") #'previous-buffer)
 (global-set-key (kbd "<C-next>")  #'next-buffer)
+(global-set-key (kbd "C-}")  #'next-buffer)
 (global-set-key (kbd "<f5>") 'compile)
 (global-set-key (kbd "<f6>") 'recompile)
 (global-set-key (kbd "<f7>") 'arduino-mode)
@@ -379,4 +481,3 @@ document.addEventListener('DOMContentLoaded', () => {
   (message (buffer-file-name)))
 
 (load custom-file 'noerror)
-
