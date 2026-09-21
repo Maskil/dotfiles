@@ -57,13 +57,16 @@ Intended for `after-make-frame-functions'."
 (setq ring-bell-function 'ignore)
 (rc/require 'multiple-cursors)
 (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+(global-set-key (kbd "C->") 'mc/mark-next-like-this)
+(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+(global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
 (global-set-key (kbd "s-<up>") 'toggle-frame-maximized)
 (setq display-line-numbers-type 'relative)
 (global-display-line-numbers-mode)
 (delete-selection-mode 1)
 (compilation-shell-minor-mode)
 (pixel-scroll-precision-mode)
-(global-visual-line-mode)
+(global-visual-line-mode t)
 
 (defun y-or-n-p-with-return (orig-func &rest args)
   (let ((query-replace-map (copy-keymap query-replace-map)))
@@ -299,12 +302,88 @@ Intended for `after-make-frame-functions'."
   (httpd-start)
   (imp-visit-buffer))
 
-;; (require 'mu4e)
-;; (setq mu4e-maildir "~/maildir")  ; Path to your Maildir
-;; (setq mu4e-get-mail-command "mbsync --config ~/.emacs.d/.mbsyncrc nameaccount")
-;; (setq mu4e-update-interval 300)  ; Update interval in seconds
+(setq epg-pinentry-mode 'loopback)
+(use-package mu4e
+  :config
+  (setq mu4e-maildir "~/.mail/personal/"
+        mu4e-get-mail-command "mbsync personal"
+        mu4e-update-interval 300
+        mu4e-inbox-folder "/Inbox"
+        mu4e-sent-folder "/Sent"
+        mu4e-drafts-folder "/Draft"
+        mu4e-trash-folder "/Trash"
+        mu4e-refile-folder "/Junk"
+        mu4e-sent-messages-behavior 'sent
+        mu4e-compose-signature-include-separator nil
+        mu4e-compose-signature "Makihiro"
+        user-mail-address "makigo@aubsebian.net"
+        user-full-name "Makihiro GO")
+  (setq sendmail-program "msmtp"
+        send-mail-function #'sendmail-send-it
+        message-sendmail-f-is-evil t
+        message-sendmail-extra-arguments (list "--read-envelope-from" "-C" (expand-file-name "~/.config/msmtprc") "-a" "personal")        
+        message-send-mail-function #'message-send-mail-with-sendmail)
+  (defun sign-or-encrypt-message ()
+    (let ((answer (read-from-minibuffer "Sign or encrypt?\nEmpty to do nothing.\n[s/e]: ")))
+      (cond
+       ((string-equal answer "s") (progn
+                                    (message "Signing message.")
+                                    (mml-secure-message-sign-pgpmime)))
+       ((string-equal answer "e") (progn
+                                    (message "Encrypt and signing message.")
+                                    (mml-secure-message-encrypt-pgpmime)))
+       (t (progn
+            (message "Dont signing or encrypting message.")
+            nil)))))
+
+  (add-hook 'message-send-hook 'sign-or-encrypt-message))
 
 (setq empv-mpv-args '("--vo=x11" "--force-window=yes"))
+
+(use-package slack
+  :bind (("C-c S K" . slack-stop)
+         ("C-c S c" . slack-select-rooms)
+         ("C-c S u" . slack-select-unread-rooms)
+         ("C-c S U" . slack-user-select)
+         ("C-c S s" . slack-search-from-messages)
+         ("C-c S J" . slack-jump-to-browser)
+         ("C-c S j" . slack-jump-to-app)
+         ("C-c S e" . slack-insert-emoji)
+         ("C-c S E" . slack-message-edit)
+         ("C-c S r" . slack-message-add-reaction)
+         ("C-c S t" . slack-thread-show-or-create)
+         ("C-c S g" . slack-message-redisplay)
+         ("C-c S G" . slack-conversations-list-update-quick)
+         ("C-c S q" . slack-quote-and-reply)
+         ("C-c S Q" . slack-quote-and-reply-with-link)
+         (:map slack-mode-map
+               (("@" . slack-message-embed-mention)
+                ("#" . slack-message-embed-channel)))
+         (:map slack-thread-message-buffer-mode-map
+               (("C-c '" . slack-message-write-another-buffer)
+                ("@" . slack-message-embed-mention)
+                ("#" . slack-message-embed-channel)))
+         (:map slack-message-buffer-mode-map
+               (("C-c '" . slack-message-write-another-buffer)))
+         (:map slack-message-compose-buffer-mode-map
+               (("C-c '" . slack-message-send-from-buffer)))
+         )
+  :custom
+  (slack-extra-subscribed-channels (mapcar 'intern (list "some-channel")))
+  :config
+  (slack-register-team
+     :name "Nakaolab"
+     :token "xoxc-133736533442-8707262827895-10944013290022-57aa0612137bbb2622e167e536f7d8f4b07ac0b6610137ff79872db0fc7f18a9"
+     :cookie "xoxd-pxSXPlms6srv4PzRiuk54SlCjHH0wWyrj4PC1x%2BDdza7Lo%2FdvGrj08ENRYn2hFfjUsUHRpFYq1h9O%2FisUxVYOSTIZ%2FCEjN%2BKUFfQf9Bn2RGA0pF07%2BuvTc%2FWS7jKaeo0b9Xf3jrjdLhXVeSTwPCdKpGGzROlin99KEknT4xC9AUYLY2b3UhssMlF6ZIV8IzhxpukQ752wLwszdbRr%2FqZm%2BNLMcs%3D; d-s=1776538243; lc=1776538265"
+     :full-and-display-names t
+     :default t
+     :subscribed-channels nil ;; using slack-extra-subscribed-channels because I can change it dynamically
+     ))
+
+(use-package alert
+  :commands (alert)
+  :init
+  (setq alert-default-style 'notifier))
 
 (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
 (load-file custom-file)
