@@ -187,25 +187,27 @@
                        ("./configure" "--without-texmf-dir" "--with-lispdir=.")
                        ("make")))
   :mode ("\\.tex\\'" . LaTeX-mode)
+  :hook ((LaTeX-mode . visual-line-mode)
+         (LaTeX-mode . flyspell-mode)
+         (LaTeX-mode . LaTeX-math-mode)
+         (LaTeX-mode . turn-on-reftex)
+         (LaTeX-mode . (lambda () (setq-local fill-column 100)))
+         (TeX-after-compilation-finished-functions . TeX-revert-document-buffer))
+  :custom
+  (TeX-parse-self t)
+  (font-latex-fontify-script nil)
+  (font-latex-fontify-sectioning 'color)
+  (reftex-plug-into-AUCTeX t)
   :config
-  (setq TeX-parse-self t)
   (setq-default TeX-master nil)
-  (setq font-latex-fontify-script nil)
-  (setq font-latex-fontify-sectioning 'color)
-  (fset 'tex-font-lock-suscript 'ignore)
-  (add-hook 'LaTeX-mode-hook 'visual-line-mode)
-  (add-hook 'LaTeX-mode-hook 'flyspell-mode)
-  (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
-  (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
-  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
-  (setq reftex-plug-into-AUCTeX t)
+  (fset 'tex-font-lock-suscript #'ignore))
 
-  ;; --- make C-c C-a use latexmk, letting latexmkrc pick the engine ---
-  (with-eval-after-load 'tex
-    (add-to-list 'TeX-command-list
-                 '("LatexMk" "latexmk %t" TeX-run-TeX nil t
-                   :help "Run latexmk; engine & pdf-mode come from latexmkrc"))
-    (setq-default TeX-command-default "LatexMk")))
+;; --- make C-c C-a use latexmk, letting latexmkrc pick the engine ---
+(with-eval-after-load 'tex
+  (add-to-list 'TeX-command-list
+               '("LatexMk" "latexmk %t" TeX-run-TeX nil t
+                 :help "Run latexmk; engine & pdf-mode come from latexmkrc"))
+  (setq-default TeX-command-default "LatexMk"))
 
 ;; typst
 (with-eval-after-load 'treesit
