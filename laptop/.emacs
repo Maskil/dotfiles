@@ -1,391 +1,492 @@
-(defun my-configure-font (frame)
-  "Configure font given initial non-daemon FRAME.
-Intended for `after-make-frame-functions'."
-  (set-face-attribute 'default nil :font "Sarasa Mono J" :height 140)
-  (set-fontset-font "fontset-default" 'han "Sarasa Mono J"))
+(defvar elpaca-installer-version 0.12)
+(defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+(defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+(defvar elpaca-sources-directory (expand-file-name "sources/" elpaca-directory))
+(defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                              :ref nil :depth 1 :inherit ignore
+                              :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+                              :build (:not elpaca-activate)))
+(let* ((repo  (expand-file-name "elpaca/" elpaca-sources-directory))
+       (build (expand-file-name "elpaca/" elpaca-builds-directory))
+       (order (cdr elpaca-order))
+       (default-directory repo))
+  (add-to-list 'load-path (if (file-exists-p build) build repo))
+  (unless (file-exists-p repo)
+    (make-directory repo t)
+    (when (<= emacs-major-version 28) (require 'subr-x))
+    (condition-case-unless-debug err
+        (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                  ((zerop (apply #'call-process
+                                 `("git" nil ,buffer t "clone"
+                                   ,@(when-let* ((depth (plist-get order :depth)))
+                                       (list (format "--depth=%d" depth) "--no-single-branch"))
+                                   ,(plist-get order :repo) ,repo))))
+                  ((zerop (call-process "git" nil buffer t "checkout"
+                                        (or (plist-get order :ref) "--"))))
+                  (emacs (concat invocation-directory invocation-name))
+                  ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                        "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                  ((require 'elpaca))
+                  ((elpaca-generate-autoloads "elpaca" repo)))
+            (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+          (error "%s" (with-current-buffer buffer (buffer-string))))
+      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+  (unless (require 'elpaca-autoloads nil t)
+    (require 'elpaca)
+    (elpaca-generate-autoloads "elpaca" repo)
+    (let ((load-source-file-function nil)) (load "./elpaca-autoloads"))))
+(add-hook 'after-init-hook #'elpaca-process-queues)
+(elpaca `(,@elpaca-order))
+(setq elpaca-log-functions nil)
 
-(add-hook 'after-make-frame-functions #'my-configure-font)
+(elpaca elpaca-use-package (elpaca-use-package-mode))
+(setq use-package-always-ensure t)
 
-(package-initialize)
-(setq custom-file "~/.emacs.custom.el")
-(add-to-list 'load-path "~/.emacs.local/")
-(load-file "~/.emacs.rc/rc.el")
+(elpaca 'ef-themes)
+(elpaca dimmer)
+(when (eq system-type 'darwin)
+  (setq shell-file-name "/opt/homebrew/bin/bash")
+  (setq vterm-shell "/opt/homebrew/bin/bash"))
+(elpaca vterm)
+(elpaca agent-shell)
 
-(require 'exwm)
-(exwm-enable)
+(elpaca-wait)
 
-(push '(fullscreen . maximized) default-frame-alist)
-(rc/require 'exec-path-from-shell)
-(rc/require 'magit)
-(rc/require 'auctex)
-(rc/require 'auctex-latexmk)
-(add-to-list 'same-window-buffer-names "*compilation*")
-(add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
-
-(display-battery-mode 1)
-(setq battery-mode-line-format "[BTR %p%%]")
-
-;; fundemental settings
-;; (add-to-list 'default-frame-alist `(font . "Sarasa Mono J"))
-(exec-path-from-shell-initialize)
-(set-face-attribute 'default nil :font "Sarasa Mono J" :height 132)
-(set-face-attribute 'variable-pitch nil :family "Sarasa Mono J")
-(set-face-attribute 'fixed-pitch nil :family "Sarasa Mono J")
-(set-frame-font "Sarasa Mono J" nil t)
 (menu-bar-mode 0)
 (tool-bar-mode 0)
-(setq inhibit-splash-screen 1)
 (scroll-bar-mode 0)
-(ido-mode 1)
-(define-key ido-file-completion-map "C-f" 'ido-fallback-command)
-(column-number-mode 1)
-(global-so-long-mode 1)
-(global-visual-line-mode t)
-(setq split-width-threshold nil)
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 2)
-(setq kill-whole-line t)
-(electric-pair-mode 1)
-(setq electric-pair-preserve-balance nil)
-(require 'highlight-indent-guides)
-(add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
-(setq highlight-indent-guides-auto-enabled nil)
-(set-face-background 'highlight-indent-guides-odd-face "darkgray")
-(set-face-background 'highlight-indent-guides-even-face "dimgray")
-(set-face-foreground 'highlight-indent-guides-character-face "dimgray")
-(setq compilation-environment '("TERM=xterm-256color"))
-(setq ring-bell-function 'ignore)
-(rc/require 'multiple-cursors)
-(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-(global-set-key (kbd "C->") 'mc/mark-next-like-this)
-(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-(global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
-(global-set-key (kbd "s-<up>") 'toggle-frame-maximized)
-(setq display-line-numbers-type 'relative)
-(global-display-line-numbers-mode)
-(delete-selection-mode 1)
-(compilation-shell-minor-mode)
-(pixel-scroll-precision-mode)
-(global-visual-line-mode t)
+(setq inhibit-splash-screen t)
+(setq inhibit-startup-message t)
+(setenv "LANG" "en_US.UTF-8")
+(setenv "DICTIONARY" "en_US")
+(add-to-list 'initial-frame-alist '(fullscreen . fullboth))
+(add-to-list 'default-frame-alist '(fullscreen . fullboth))
+(setq frame-resize-pixelwise t)
+(setq window-resize-pixelwise t)
 
-(defun y-or-n-p-with-return (orig-func &rest args)
-  (let ((query-replace-map (copy-keymap query-replace-map)))
-    (define-key query-replace-map (kbd "RET") 'act)
-    (apply orig-func args)))
+(dolist (dir '("~/.emacs-saves" "~/.emacs.local"))
+  (unless (file-exists-p dir)
+    (make-directory dir t)))
 
-(advice-add 'y-or-n-p :around #'y-or-n-p-with-return)
+(unless (file-exists-p "~/.emacs.custom.el")
+  (with-temp-buffer (write-file "~/.emacs.custom.el")))
 
-;; smex
-(rc/require 'smex 'ido-completing-read+)
-(global-set-key (kbd "M-x") 'smex)
-(global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
-(ido-everywhere 1)
-(ido-ubiquitous-mode 1)
+(add-to-list 'load-path "~/.emacs.local/")
 
-;; pdf-tools
-(rc/require 'pdf-tools)
-(pdf-loader-install)
-(add-hook 'pdf-tools-enabled-hook (lambda () (display-line-numbers-mode -1)))
+(setq custom-file "~/.emacs.custom.el")
 
-;; render html
-(load-library "shr.el")
-(eval-after-load 'shr ;; should not truncate lines in eww
-  '(progn (setq shr-width -1)
-          (defun shr-fill-text (text) text)
-          (defun shr-fill-lines (start end) nil)
-          (defun shr-fill-line () nil)))
-
-
-;; old reddit
-(defun eww-redirect-reddit ()
-  "Redirect 'https://www.reddit.com' to 'https://old.reddit.com' in EWW."
-  (when-let ((url (eww-current-url)))
-    (when (string-prefix-p "https://www.reddit.com" url)
-      (eww-browse-url (replace-regexp-in-string
-                       "^https://www\\.reddit\\.com" "https://old.reddit.com" url)))))
-(defun eww-enable-visual-line-mode ()
-  "Enable visual-line-mode after EWW finishes rendering."
-  (run-at-time 0.1 nil #'visual-line-mode 1))
-(add-hook 'eww-after-render-hook #'eww-redirect-reddit #'eww-enable-visual-line-mode)
-
-;; Compiling shit
-(global-set-key (kbd "<f7>") 'arduino-mode)
-(global-set-key (kbd "<f5>") 'compile)
-(global-set-key (kbd "<f6>") 'recompile)
-(rc/require 'ansi-color)
-(add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
-;; (ignore-errors
-;;   (require 'ansi-color)
-;;   (defun my-colorize-compilation-buffer ()
-;;     (when (eq major-mode 'compilation-mode)
-;;       (ansi-color-apply-on-region compilation-filter-start (point-max))))
-;;   (add-hook 'compilation-filter-hook 'my-colorize-compilation-buffer))
-
-;; tmp files
-(setq auto-save-file-name-transforms `((".*" "~/.emacs-saves/" t)))
-(setq backup-directory-alist '((".*" . "~/.emacs-saves")))
-
-;; lsp & company
-(rc/require 'company)
-(rc/require 'company-jedi)
-(global-company-mode)
-(setq company-idle-delay 0)
-(add-to-list 'company-backends 'company-jedi)
-(require 'python)
-(add-hook 'python-mode-hook 'jedi:setup)
-(add-hook 'company-mode-hook
+(add-hook 'elpaca-after-init-hook
           (lambda ()
-            (setq company-filter-always-p t)
-            (setf company-filter '(lambda (candidates)
-                                    (cl-remove-if-not
-                                     (lambda (dir) (not (string-match "^\\./|^\\.\\/" dir)))
-                                     candidates)))))
+            (load custom-file 'noerror)
+            (load-theme 'ef-melissa-dark t)))
 
-;; aucTeX
-(add-to-list 'auto-mode-alist '("\\.tex$" . LaTeX-mode))
-(setq TeX-parse-self t)
-(setq-default TeX-master nil)
-(add-hook 'latex-mode-hook 'visual-line-mode)
-(add-hook 'latex-mode-hook 'flyspell-mode)
-(add-hook 'latex-mode-hook 'latex-math-mode)
-(add-hook 'latex-mode-hook 'turn-on-reftex)
-(setq reftx-plug-into-AUCTex t)
-(setq font-latex-fontify-script nil)
-(setq font-latex-fontify-sectioning 'color)
-(defalias 'japanese-change-line
-  (kmacro "C-\\ % <return> C-\\"))
-(add-hook 'LaTeX-mode-hook (lambda () (local-set-key (kbd "C-c p") 'japanese-change-line)))
-(auctex-latexmk-setup)
+;; EXWM
+(defun efs/exwm-update-class ()
+  (exwm-workspace-rename-buffer exwm-class-name))
+(use-package exwm
+  :config
+  (setq exwm-workspace-number 4)
+  (setopt exwm-workspace-index-map (lambda (i) (number-to-string (1+ i))))
 
-;; mozc japanese shit
-(rc/require 'mozc)
-(setq default-input-method "japanese-mozc")
-(prefer-coding-system 'utf-8)
-(global-set-key (kbd "C-\\") 'toggle-input-method)
+  ;; When window "class" updates, use it to set the buffer name
+  (add-hook 'exwm-update-class-hook #'efs/exwm-update-class)
 
-(defun delete-line-no-kill ()
-  (interactive)
-  (delete-region (point) (line-end-position)))
-(global-set-key (kbd "C-S-k") 'delete-line-no-kill)
+  ;; These keys should always pass through to Emacs
+  (setq exwm-input-prefix-keys
+    '(?\C-x
+      ?\C-u
+      ?\C-h
+      ?\M-x
+      ?\M-`
+      ?\M-&
+      ?\M-:
+      ?\C-\M-j  ;; Buffer list
+      ?\C-\ ))  ;; Ctrl+Space
 
-(defun ryanmarcus/backward-kill-word ()
-  "Remove all whitespace if the character behind the cursor is whitespace, otherwise remove a word."
-  (interactive)
-  (if (looking-back "[ \n]")
-      ;; delete horizontal space before us and then check to see if we
-      ;; are looking at a newline
-      (progn (delete-horizontal-space 't)
-             (while (looking-back "[ \n]")
-               (backward-delete-char 1)))
-    ;; otherwise, just do the normal kill word.
-    (backward-kill-word 1)))
+  ;; Ctrl+Q will enable the next key to be sent directly
+  (define-key exwm-mode-map [?\C-q] 'exwm-input-send-next-key)
 
-;; do not split window for error messages
-;; (setq same-window-regexps '("."))
+  ;; Set up global key bindings.  These always work, no matter the input state!
+  ;; Keep in mind that changing this list after EXWM initializes has no effect.
+  (setq exwm-input-global-keys
+        `(
+          ;; Reset to line-mode (C-c C-k switches to char-mode via exwm-input-release-keyboard)
+          ([?\s-r] . exwm-reset)
 
-;; auto revert
-(global-auto-revert-mode t)
+          ;; Move between windows
+          ([s-left] . windmove-left)
+          ([s-right] . windmove-right)
+          ([s-up] . windmove-up)
+          ([s-down] . windmove-down)
 
-;; (require 'simpc-mode)
-;; (add-to-list 'auto-mode-alist '("\\.[hc]\\(pp\\)?\\'" . simpc-mode))
+          ;; Launch applications via shell command
+          ([?\s-&] . (lambda (command)
+                       (interactive (list (read-shell-command "$ ")))
+                       (start-process-shell-command command nil command)))
+
+          ;; Switch workspace
+          ([?\s-w] . exwm-workspace-switch)
+
+          ;; 's-N': Switch to certain workspace with Super (Win) plus a number key
+          ,@(mapcar (lambda (i)
+                      `(,(kbd (format "s-%d" i)) .
+                        (lambda ()
+                          (interactive)
+                          (exwm-workspace-switch-create ,(1- i)))))
+                    (number-sequence 1 4))))
+  (exwm-wm-mode 1))
+
+;; ============================================================
+;; Core packages
+;; ============================================================
+
+(use-package exec-path-from-shell
+  :config
+  (exec-path-from-shell-initialize))
+
+(use-package flycheck
+  :commands flycheck-mode)
+
+(use-package compat
+  :ensure (:repo "https://github.com/emacs-compat/compat.git"
+           :files (:defaults "compat-*.el")))
+(use-package llama)
+(use-package transient
+  :ensure (:repo "https://github.com/magit/transient.git"
+           :files (:defaults)))
+(use-package magit)
+
+(use-package company
+  :config
+  (global-company-mode)
+  (setq company-idle-delay 0)
+  (setq company-transformers '(company-remove-dot-and-dotdot)))
 
 (defun company-remove-dot-and-dotdot (candidates)
-  "Remove `.` and `..` from the COMPANY completion CANDIDATES."
+  "Remove `.` and `..` from COMPANY completion CANDIDATES."
   (seq-remove (lambda (candidate)
                 (or (string-equal candidate "./")
                     (string-equal candidate "../")))
               candidates))
 
-(setq company-transformers '(company-remove-dot-and-dotdot))
+(use-package company-jedi
+  :after company
+  :config
+  (add-to-list 'company-backends 'company-jedi)
+  (add-hook 'python-mode-hook 'jedi:setup))
 
-;; remove trailing whitespaces
+(use-package multiple-cursors
+  :bind (("C-S-c C-S-c" . mc/edit-lines)
+         ("C->" . 'mc/mark-next-like-this)
+         ("C-<" . 'mc/mark-previous-like-this)
+         ("C-c C-<" . 'mc/mark-all-like-this)))
+
+(use-package smex
+  :bind (("M-x" . smex)
+         ("C-c C-c M-x" . execute-extended-command)))
+
+(use-package ido-completing-read+
+  :config
+  (ido-ubiquitous-mode 1))
+
+(setq-default auto-fill-function nil)
+(global-visual-line-mode 1)
+(setq-default word-wrap-by-category t)
+(require 'kinsoku)
+(use-package visual-fill-column
+  :ensure t
+  :hook (visual-line-mode . visual-fill-column-mode)
+  :custom
+  (visual-fill-column-width nil))
+(global-visual-wrap-prefix-mode 1)
+(setq-default visual-wrap-extra-indent 0)
+;; disable wrapping for pdf
+(defun my-disable-visual-wrapping-in-pdf ()
+  (when (derived-mode-p 'pdf-view-mode)
+    (visual-line-mode -1)
+    (when (bound-and-true-p visual-fill-column-mode)
+      (visual-fill-column-mode -1))
+    (when (bound-and-true-p visual-wrap-prefix-mode)
+      (visual-wrap-prefix-mode -1))))
+
+(add-hook 'after-change-major-mode-hook
+          #'my-disable-visual-wrapping-in-pdf
+          100)
+
+(use-package highlight-indent-guides
+  :hook (prog-mode . highlight-indent-guides-mode)
+  :config
+  (setq highlight-indent-guides-auto-enabled nil)
+  (set-face-background 'highlight-indent-guides-odd-face "darkgray")
+  (set-face-background 'highlight-indent-guides-even-face "dimgray")
+  (set-face-foreground 'highlight-indent-guides-character-face "dimgray"))
+
+(use-package ansi-color
+  :ensure nil ;; built-in
+  :hook (compilation-filter . ansi-color-compilation-filter))
+
+(use-package dumb-jump
+  :config
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+
+(use-package pdf-tools
+  :mode ("\\.pdf\\'" . pdf-view-mode)
+  :config
+  (pdf-loader-install)
+  :hook
+  (pdf-view-mode . (lambda ()
+                     (display-line-numbers-mode -1))))
+
+(use-package auctex
+  :ensure (:type git :host github :repo "emacs-straight/auctex"
+           :branch "master"
+           :files ("*.el" "*.info" "dir" "doc" "etc" "images" "latex" "style")
+           :pre-build (("./autogen.sh")
+                       ("./configure" "--without-texmf-dir" "--with-lispdir=.")
+                       ("make")))
+  :mode ("\\.tex\\'" . LaTeX-mode)
+  :hook ((LaTeX-mode . visual-line-mode)
+         (LaTeX-mode . flyspell-mode)
+         (LaTeX-mode . LaTeX-math-mode)
+         (LaTeX-mode . turn-on-reftex)
+         (LaTeX-mode . (lambda () (setq-local fill-column 100)))
+         (TeX-after-compilation-finished-functions . TeX-revert-document-buffer))
+  :custom
+  (TeX-parse-self t)
+  (font-latex-fontify-script nil)
+  (font-latex-fontify-sectioning 'color)
+  (reftex-plug-into-AUCTeX t)
+  :config
+  (setq-default TeX-master nil)
+  (fset 'tex-font-lock-suscript #'ignore))
+
+;; --- make C-c C-a use latexmk, letting latexmkrc pick the engine ---
+(with-eval-after-load 'tex
+  (add-to-list 'TeX-command-list
+               '("LatexMk" "latexmk %t" TeX-run-TeX nil t
+                 :help "Run latexmk; engine & pdf-mode come from latexmkrc"))
+  (setq-default TeX-command-default "LatexMk"))
+
+;; typst
+(with-eval-after-load 'treesit
+  (add-to-list
+   'treesit-language-source-alist
+   '(typst "https://github.com/uben0/tree-sitter-typst")))
+
+(defalias 'japanese-change-line
+  (kmacro "C-\\ % <return> C-\\"))
+(with-eval-after-load 'latex
+  (define-key LaTeX-mode-map (kbd "C-c p") 'japanese-change-line))
+
+(use-package mozc
+  :config
+  (setq default-input-method "japanese-mozc"))
+(prefer-coding-system 'utf-8)
+
+(use-package markdown-mode
+  :mode ("\\.md\\'" . gfm-mode)
+  :hook (markdown-mode . auto-fill-mode)
+  :config
+  (setq markdown-command '("pandoc"
+                           "-f" "gfm+tex_math_dollars"
+                           "-t" "html" "--mathjax")
+        markdown-enable-wiki-links t
+        markdown-italic-underscore t
+        markdown-asymmetric-header t
+        markdown-make-gfm-checkboxes-buttons t
+        markdown-gfm-uppercase-checkbox t
+        markdown-enable-math t
+        markdown-content-type "application/xhtml+xml"
+        markdown-css-paths
+        '("https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown.min.css")
+        markdown-xhtml-header-content
+        "<style>
+body {
+  box-sizing: border-box;
+  max-width: 1200px;
+  width: 100%;
+  margin: 40px auto;
+  padding: 0 10px;
+}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.body.classList.add('markdown-body');
+});
+</script>"))
+
+(elpaca (simple-httpd :host github :repo "skeeto/emacs-web-server"
+                      :local-repo "emacs-web-server"))
+
+(use-package impatient-mode
+  :commands (impatient-mode)
+  :config
+  (defun markdown-filter-impatient-mode (buffer)
+    "Markdown filter for impatient-mode."
+    (princ
+     (with-temp-buffer
+       (let ((tmpname (buffer-name)))
+         (set-buffer buffer)
+         (set-buffer (markdown tmpname))
+         (format "<!DOCTYPE html>
+<html><head>
+<title>Markdown Preview</title>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css'>
+<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css'>
+<style>
+.markdown-body { box-sizing: border-box; margin: 0 auto; max-width: 1200px; min-width: 200px; padding: 45px; }
+@media (max-width: 767px) { .markdown-body { padding: 15px; } }
+</style>
+</head><body>
+<article class='markdown-body'>%s</article>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js'></script>
+<script>hljs.highlightAll();</script>
+<script src='https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js'></script>
+</body></html>"
+                 (buffer-string))))
+     (current-buffer)))
+  (defun md-preview ()
+    "Preview current markdown buffer in browser."
+    (interactive)
+    (impatient-mode)
+    (imp-set-user-filter 'markdown-filter-impatient-mode)
+    (httpd-start)
+    (imp-visit-buffer)))
+
+(use-package matlab-mode
+  :mode ("\\.m\\'" . matlab-mode))
+
+(defun my-configure-font (frame)
+  "Configure font for FRAME (works with daemon and non-daemon)."
+  (with-selected-frame frame
+    (set-face-attribute 'default nil :font "Sarasa Mono J" :height 140)
+    (set-fontset-font "fontset-default" 'han "Sarasa Mono J")))
+
+(if (daemonp)
+    (add-hook 'after-make-frame-functions #'my-configure-font)
+  (add-hook 'after-init-hook (lambda () (my-configure-font (selected-frame)))))
+
+;; EWW
+(with-eval-after-load 'eww
+  (set-face-attribute 'shr-text nil :family "Sarasa Mono J" :height 135))
+
+(defun eww-save-image (filename)
+  "Save an image opened in an *eww* buffer to FILENAME."
+  (interactive "G")
+  (let ((image (get-text-property (point-min) 'display)))
+    (with-temp-buffer
+      (setq buffer-file-name filename)
+      (insert (plist-get (if (eq (car image) 'image) (cdr image)) :data))
+      (save-buffer))))
+
+(defun eww-redirect-reddit ()
+  "Redirect www.reddit.com to old.reddit.com in EWW."
+  (when-let ((url (eww-current-url)))
+    (when (string-prefix-p "https://www.reddit.com" url)
+      (eww-browse-url (replace-regexp-in-string
+                       "^https://www\\.reddit\\.com" "https://old.reddit.com" url)))))
+
+(defun eww-enable-visual-line-mode ()
+  "Enable visual-line-mode after EWW finishes rendering."
+  (run-at-time 0.1 nil #'visual-line-mode 1))
+
+(add-hook 'eww-after-render-hook #'eww-redirect-reddit)
+(add-hook 'eww-after-render-hook #'eww-enable-visual-line-mode)
+
+;; Load shr for HTML rendering
+(with-eval-after-load 'eww (require 'shr))
+
+;; ============================================================
+;; Fundamental settings
+;; ============================================================
+(ido-mode 1)
+(ido-everywhere 1)
+
+(column-number-mode 1)
+(global-so-long-mode 1)
+(global-visual-line-mode t)
+(global-auto-revert-mode t)
+(delete-selection-mode 1)
+(electric-pair-mode 1)
+(pixel-scroll-precision-mode)
+
+(setq split-width-threshold nil)
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 2)
+(setq kill-whole-line t)
+(setq electric-pair-preserve-balance nil)
+(setq compilation-environment '("TERM=xterm-256color"))
+(setq ring-bell-function 'ignore)
+(setq display-line-numbers-type 'relative)
+(defcustom my/display-line-numbers-exempt-modes '(pdf-view-mode)
+  "Major modes in which `display-line-numbers-mode' should stay off."
+  :type '(repeat symbol))
+(define-globalized-minor-mode my/global-display-line-numbers-mode
+  display-line-numbers-mode
+  (lambda ()
+    (unless (or (minibufferp)
+                (apply #'derived-mode-p my/display-line-numbers-exempt-modes))
+      (display-line-numbers-mode))))
+(my/global-display-line-numbers-mode)
+
+;; Temp/backup files
+(setq auto-save-file-name-transforms `((".*" "~/.emacs-saves/" t)))
+(setq backup-directory-alist '((".*" . "~/.emacs-saves")))
+
+;; Compilation
+(add-to-list 'same-window-buffer-names "*compilation*")
+
+;; ============================================================
+;; Keybindings
+;; ============================================================
+(global-set-key (kbd "C-\\") 'toggle-input-method)
+(global-set-key (kbd "s-<up>") 'toggle-frame-maximized)
+;; (global-set-key (kbd "<C-prior>") #'previous-buffer)
+;; (global-set-key (kbd "C-{") #'previous-buffer)
+;; (global-set-key (kbd "<C-next>")  #'next-buffer)
+;; (global-set-key (kbd "C-}")  #'next-buffer)
+(global-set-key (kbd "<f5>") 'compile)
+(global-set-key (kbd "<f6>") 'recompile)
+(global-set-key (kbd "<f7>") 'arduino-mode)
+(global-set-key (kbd "C-S-k") 'delete-line-no-kill)
+(global-set-key (kbd "<C-f1>") 'show-file-name)
+
+;; ============================================================
+;; Custom functions
+;; ============================================================
+(defun y-or-n-p-with-return (orig-func &rest args)
+  "Allow RET to act as 'y' in y-or-n-p prompts."
+  (let ((query-replace-map (copy-keymap query-replace-map)))
+    (define-key query-replace-map (kbd "RET") 'act)
+    (apply orig-func args)))
+(advice-add 'y-or-n-p :around #'y-or-n-p-with-return)
+
+(defun delete-line-no-kill ()
+  "Delete to end of line without adding to kill ring."
+  (interactive)
+  (delete-region (point) (line-end-position)))
+
+(defun ryanmarcus/backward-kill-word ()
+  "Remove whitespace or a word backward."
+  (interactive)
+  (if (looking-back "[ \n]")
+      (progn (delete-horizontal-space 't)
+             (while (looking-back "[ \n]")
+               (backward-delete-char 1)))
+    (backward-kill-word 1)))
+
 (defun rm-trailing-spaces ()
-  "Remove spaces at ends of all lines"
+  "Remove trailing whitespace from all lines."
   (interactive)
   (save-excursion
     (let ((current (point)))
-      (goto-char 0)
+      (goto-char (point-min))
       (while (re-search-forward "[ \t]+$" nil t)
         (replace-match "" nil nil))
       (goto-char current))))
 
-(use-package markdown-mode
-  :hook ((markdown-mode . auto-fill-mode))
-  :mode ((".md\\'" . gfm-mode))
-  :config
-  (setq
-   markdown-enable-wiki-links t
-   markdown-italic-underscore t
-   markdown-asymmetric-header t
-   markdown-make-gfm-checkboxes-buttons t
-   markdown-gfm-uppercase-checkbox t
-   markdown-enable-math t
-   markdown-content-type "application/xhtml+xml"
-   markdown-css-paths '("https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown.min.css")
-   markdown-xhtml-header-content "
-      <style>
-      body {
-        box-sizing: border-box;
-        max-width: 1200px;
-        width: 100%;
-        margin: 40px auto;
-        padding: 0 10px;
-      }
-      </style>
-      <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        document.body.classList.add('markdown-body');
-      });
-      </script>
-      " ))
-
-(defun markdown-filter-impatient-mode (buffer)
-  "Markdown filter for impatient-mode"
-  (princ
-   (with-temp-buffer
-     (let ((tmpname (buffer-name)))
-       (set-buffer buffer)
-       (set-buffer (markdown tmpname))
-       (format "
- <!DOCTYPE html>
-  <html>
-  <head>
-      <title>Markdown Preview</title>
-      <meta name='viewport' content=
-      'width=device-width, initial-scale=1'>
-      <link rel='stylesheet' href=
-      'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css'
-      integrity=
-      'sha512-Oy18vBnbSJkXTndr2n6lDMO5NN31UljR8e/ICzVPrGpSud4Gkckb8yUpqhKuUNoE+o9gAb4O/rAxxw1ojyUVzg=='
-      crossorigin='anonymous'>
-      <!-- https://github.com/sindresorhus/github-markdown-css -->
-      <link rel='stylesheet' href=
-      'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css'>
-      <!-- https://highlightjs.org -->
-
-      <style>
-      .markdown-body {
-          box-sizing: border-box;
-          margin: 0 auto;
-          max-width: 1200px;
-          min-width: 200px;
-          padding: 45px;
-       }
-
-       @media (max-width: 767px) {
-           .markdown-body {
-               padding: 15px;
-           }
-       }
-      </style>
-  </head>
-  <body>
-      <article class='markdown-body'>
-          %s
-      </article>
-      <script src=
-      'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js'></script>
-
-      <script>
-
-      hljs.highlightAll();
-      </script>
-  </body>
-  </html>"
-               (buffer-string))))
-   (current-buffer)))
-
-(defun md-preview ()
+(defun show-file-name ()
+  "Show the full path of the current file in the minibuffer."
   (interactive)
-  (impatient-mode)
-  (imp-set-user-filter `markdown-filter-impatient-mode)
-  (httpd-start)
-  (imp-visit-buffer))
-
-(setq epg-pinentry-mode 'loopback)
-(use-package mu4e
-  :config
-  (setq mu4e-maildir "~/.mail/personal/"
-        mu4e-get-mail-command "mbsync personal"
-        mu4e-update-interval 300
-        mu4e-inbox-folder "/Inbox"
-        mu4e-sent-folder "/Sent"
-        mu4e-drafts-folder "/Draft"
-        mu4e-trash-folder "/Trash"
-        mu4e-refile-folder "/Junk"
-        mu4e-sent-messages-behavior 'sent
-        mu4e-compose-signature-include-separator nil
-        mu4e-compose-signature "Makihiro"
-        user-mail-address "makigo@aubsebian.net"
-        user-full-name "Makihiro GO")
-  (setq sendmail-program "msmtp"
-        send-mail-function #'sendmail-send-it
-        message-sendmail-f-is-evil t
-        message-sendmail-extra-arguments (list "--read-envelope-from" "-C" (expand-file-name "~/.config/msmtprc") "-a" "personal")        
-        message-send-mail-function #'message-send-mail-with-sendmail)
-  (defun sign-or-encrypt-message ()
-    (let ((answer (read-from-minibuffer "Sign or encrypt?\nEmpty to do nothing.\n[s/e]: ")))
-      (cond
-       ((string-equal answer "s") (progn
-                                    (message "Signing message.")
-                                    (mml-secure-message-sign-pgpmime)))
-       ((string-equal answer "e") (progn
-                                    (message "Encrypt and signing message.")
-                                    (mml-secure-message-encrypt-pgpmime)))
-       (t (progn
-            (message "Dont signing or encrypting message.")
-            nil)))))
-
-  (add-hook 'message-send-hook 'sign-or-encrypt-message))
-
-(setq empv-mpv-args '("--vo=x11" "--force-window=yes"))
-
-(use-package slack
-  :bind (("C-c S K" . slack-stop)
-         ("C-c S c" . slack-select-rooms)
-         ("C-c S u" . slack-select-unread-rooms)
-         ("C-c S U" . slack-user-select)
-         ("C-c S s" . slack-search-from-messages)
-         ("C-c S J" . slack-jump-to-browser)
-         ("C-c S j" . slack-jump-to-app)
-         ("C-c S e" . slack-insert-emoji)
-         ("C-c S E" . slack-message-edit)
-         ("C-c S r" . slack-message-add-reaction)
-         ("C-c S t" . slack-thread-show-or-create)
-         ("C-c S g" . slack-message-redisplay)
-         ("C-c S G" . slack-conversations-list-update-quick)
-         ("C-c S q" . slack-quote-and-reply)
-         ("C-c S Q" . slack-quote-and-reply-with-link)
-         (:map slack-mode-map
-               (("@" . slack-message-embed-mention)
-                ("#" . slack-message-embed-channel)))
-         (:map slack-thread-message-buffer-mode-map
-               (("C-c '" . slack-message-write-another-buffer)
-                ("@" . slack-message-embed-mention)
-                ("#" . slack-message-embed-channel)))
-         (:map slack-message-buffer-mode-map
-               (("C-c '" . slack-message-write-another-buffer)))
-         (:map slack-message-compose-buffer-mode-map
-               (("C-c '" . slack-message-send-from-buffer)))
-         )
-  :custom
-  (slack-extra-subscribed-channels (mapcar 'intern (list "some-channel")))
-  :config
-  (slack-register-team
-     :name "Nakaolab"
-     :token "xoxc-133736533442-8707262827895-10944013290022-57aa0612137bbb2622e167e536f7d8f4b07ac0b6610137ff79872db0fc7f18a9"
-     :cookie "xoxd-pxSXPlms6srv4PzRiuk54SlCjHH0wWyrj4PC1x%2BDdza7Lo%2FdvGrj08ENRYn2hFfjUsUHRpFYq1h9O%2FisUxVYOSTIZ%2FCEjN%2BKUFfQf9Bn2RGA0pF07%2BuvTc%2FWS7jKaeo0b9Xf3jrjdLhXVeSTwPCdKpGGzROlin99KEknT4xC9AUYLY2b3UhssMlF6ZIV8IzhxpukQ752wLwszdbRr%2FqZm%2BNLMcs%3D; d-s=1776538243; lc=1776538265"
-     :full-and-display-names t
-     :default t
-     :subscribed-channels nil ;; using slack-extra-subscribed-channels because I can change it dynamically
-     ))
-
-(use-package alert
-  :commands (alert)
-  :init
-  (setq alert-default-style 'notifier))
-
-(add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
-(load-file custom-file)
-
-(put 'list-timers 'disabled nil)
+  (message (buffer-file-name)))

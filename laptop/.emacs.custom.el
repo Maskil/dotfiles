@@ -6,10 +6,12 @@
  '(TeX-engine 'luatex)
  '(TeX-view-program-selection nil)
  '(agent-shell-openai-default-model-id "gpt-5.5/medium")
+ '(battery-mode-line-format "[BTR %p%%] ")
  '(custom-enabled-themes '(gruber-darker))
  '(custom-safe-themes
-   '("e13beeb34b932f309fb2c360a04a460821ca99fe58f69e65557d6c1b10ba18c7"
-     default))
+   '("e13beeb34b932f309fb2c360a04a460821ca99fe58f69e65557d6c1b10ba18c7" default))
+ '(display-battery-mode t)
+ '(fill-column 100)
  '(highlight-indent-guides-character 124)
  '(highlight-indent-guides-method 'character)
  '(message-send-hook nil)
@@ -23,16 +25,14 @@
  '(mml-secure-smime-signers nil)
  '(mozc-candidate-style 'echo-area)
  '(package-selected-packages
-   '(agent-shell auctex-latexmk company company-jedi dash-functional
-                 debase discomfort ednc empv exec-path-from-shell exwm
-                 exwm-firefox-core exwm-mff gnu-elpa-keyring-update
-                 gruber-darker-theme ido-completing-read+ magit mozc
-                 multiple-cursors pdf-tools slack smex vterm
-                 xdg-appmenu zotxt))
+   '(agent-shell auctex-latexmk company company-jedi dash-functional debase discomfort ednc empv
+                 exec-path-from-shell exwm exwm-firefox-core exwm-mff gnu-elpa-keyring-update
+                 gruber-darker-theme ido-completing-read+ magit mozc multiple-cursors pdf-tools
+                 slack smex vterm xdg-appmenu zotxt))
  '(smime-certificate-directory "~/.mail/personal/")
  '(smime-keys
-   '(("makigo@aubsebian.net"
-      "/home/maki/.mail/personal/makigo-secret.asc" nil))))
+   '(("makigo@aubsebian.net" "/home/maki/.mail/personal/makigo-secret.asc" nil)))
+ '(warning-suppress-log-types '((emacs))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
