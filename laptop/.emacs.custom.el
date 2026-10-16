@@ -5,12 +5,14 @@
  ;; If there is more than one, they won't work right.
  '(TeX-engine 'luatex)
  '(TeX-view-program-selection nil)
- '(agent-shell-openai-default-model-id "gpt-5.5/medium")
  '(battery-mode-line-format "[BTR %p%%] ")
+ '(browse-url-epiphany-new-window-is-tab t)
  '(custom-enabled-themes '(gruber-darker))
  '(custom-safe-themes
    '("e13beeb34b932f309fb2c360a04a460821ca99fe58f69e65557d6c1b10ba18c7" default))
  '(display-battery-mode t)
+ '(eww-auto-rename-buffer 'title)
+ '(eww-browse-url-new-window-is-tab t)
  '(fill-column 100)
  '(highlight-indent-guides-character 124)
  '(highlight-indent-guides-method 'character)
@@ -29,9 +31,11 @@
                  exec-path-from-shell exwm exwm-firefox-core exwm-mff gnu-elpa-keyring-update
                  gruber-darker-theme ido-completing-read+ magit mozc multiple-cursors pdf-tools
                  slack smex vterm xdg-appmenu zotxt))
+ '(safe-local-variable-values '((TeX-master . main)))
  '(smime-certificate-directory "~/.mail/personal/")
  '(smime-keys
    '(("makigo@aubsebian.net" "/home/maki/.mail/personal/makigo-secret.asc" nil)))
+ '(tab-bar-mode nil)
  '(warning-suppress-log-types '((emacs))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

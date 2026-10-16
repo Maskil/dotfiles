@@ -1,3 +1,12 @@
+(defvar my/gc-cons-threshold-after-startup (* 16 1024 1024))
+(setq gc-cons-threshold (* 64 1024 1024)
+      gc-cons-percentage 0.3)
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (setq gc-cons-threshold my/gc-cons-threshold-after-startup
+                  gc-cons-percentage 0.1)
+            (garbage-collect)))
+
 (defvar elpaca-installer-version 0.12)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
@@ -40,17 +49,31 @@
 (setq elpaca-log-functions nil)
 
 (elpaca elpaca-use-package (elpaca-use-package-mode))
+;; Wait only for the use-package integration itself.  Heavy packages below
+;; are installed/activated by Elpaca without extending the synchronous wait.
+(elpaca-wait)
 (setq use-package-always-ensure t)
 
-(elpaca 'ef-themes)
-(elpaca dimmer)
+(use-package ef-themes :defer t)
+(use-package dimmer :defer t)
 (when (eq system-type 'darwin)
   (setq shell-file-name "/opt/homebrew/bin/bash")
   (setq vterm-shell "/opt/homebrew/bin/bash"))
-(elpaca vterm)
-(elpaca agent-shell)
-
-(elpaca-wait)
+(use-package vterm
+  :commands vterm)
+(use-package agent-shell
+  :commands agent-shell
+  :config
+  (setq agent-shell-google-authentication
+      (agent-shell-google-make-authentication
+       :api-key (getenv "SLACK_TOKEN")))
+  (add-to-list 'tramp-remote-path '"/home/nakaolab/.npm-global/bin")
+  (add-to-list 'tramp-remote-path '"/home/nakaolab/.nvm/versions/node/v24.18.0/bin/"))
+(use-package agent-shell-tramp
+  :ensure (:host github :repo "junyi-hou/agent-shell-tramp")
+  :after agent-shell
+  :config
+  (agent-shell-tramp-mode 1))
 
 (menu-bar-mode 0)
 (tool-bar-mode 0)
@@ -63,6 +86,12 @@
 (add-to-list 'default-frame-alist '(fullscreen . fullboth))
 (setq frame-resize-pixelwise t)
 (setq window-resize-pixelwise t)
+
+;; Prefer input responsiveness over finishing fontification during scrolling or
+;; while more keyboard input is already pending.
+(setq redisplay-skip-fontification-on-input t
+      fast-but-imprecise-scrolling t)
+(blink-cursor-mode -1)
 
 (dolist (dir '("~/.emacs-saves" "~/.emacs.local"))
   (unless (file-exists-p dir)
@@ -141,26 +170,31 @@
 ;; ============================================================
 
 (use-package exec-path-from-shell
+  ;; On Debian/EXWM the standard /usr/bin PATH is already available.  Avoid
+  ;; spawning a login shell unless Emacs is a daemon or runs on macOS.
+  :if (or (daemonp) (memq window-system '(mac ns)))
+  :defer 1
   :config
   (exec-path-from-shell-initialize))
+(dolist (line (process-lines "/bin/bash" "-c" "source ~/.bashrc >/dev/null 2>&1; env"))
+  (when (string-match "\\`\\([^=]+\\)=\\(.*\\)\\'" line)
+    (setenv (match-string 1 line) (match-string 2 line))))
 
 (use-package flycheck
   :commands flycheck-mode)
 
 (use-package compat
   :ensure (:repo "https://github.com/emacs-compat/compat.git"
-           :files (:defaults "compat-*.el")))
-(use-package llama)
+           :files (:defaults "compat-*.el"))
+  :defer t)
+(use-package llama
+  :defer t)
 (use-package transient
   :ensure (:repo "https://github.com/magit/transient.git"
-           :files (:defaults)))
-(use-package magit)
-
-(use-package company
-  :config
-  (global-company-mode)
-  (setq company-idle-delay 0)
-  (setq company-transformers '(company-remove-dot-and-dotdot)))
+           :files (:defaults))
+  :defer t)
+(use-package magit
+  :commands (magit-status magit-dispatch magit-file-dispatch))
 
 (defun company-remove-dot-and-dotdot (candidates)
   "Remove `.` and `..` from COMPANY completion CANDIDATES."
@@ -169,11 +203,28 @@
                     (string-equal candidate "../")))
               candidates))
 
-(use-package company-jedi
-  :after company
+(use-package company
+  ;; Do not run completion machinery in every special/internal buffer.
+  :hook ((prog-mode . company-mode)
+         (text-mode . company-mode))
+  :custom
+  ;; Zero-delay completion is expensive on slow CPUs.
+  (company-idle-delay 0.25)
+  (company-minimum-prefix-length 2)
+  (company-tooltip-limit 10)
   :config
-  (add-to-list 'company-backends 'company-jedi)
-  (add-hook 'python-mode-hook 'jedi:setup))
+  (setq company-transformers '(company-remove-dot-and-dotdot)))
+
+(defun my/python-company-jedi-setup ()
+  "Enable Jedi completion only in Python buffers."
+  (require 'company-jedi)
+  (jedi:setup)
+  (setq-local company-backends
+              (cons 'company-jedi (remove 'company-jedi company-backends))))
+
+(use-package company-jedi
+  :commands company-jedi
+  :hook (python-mode . my/python-company-jedi-setup))
 
 (use-package multiple-cursors
   :bind (("C-S-c C-S-c" . mc/edit-lines)
@@ -186,37 +237,41 @@
          ("C-c C-c M-x" . execute-extended-command)))
 
 (use-package ido-completing-read+
+  :defer 1
   :config
   (ido-ubiquitous-mode 1))
 
-(setq-default auto-fill-function nil)
-(global-visual-line-mode 1)
-(setq-default word-wrap-by-category t)
+(setq-default auto-fill-function nil
+              word-wrap-by-category t
+              visual-wrap-extra-indent 0)
 (require 'kinsoku)
+
+;; Visual wrapping is useful for prose, but expensive when enabled globally.
+(defun my/enable-text-wrapping ()
+  (visual-line-mode 1)
+  (visual-wrap-prefix-mode 1))
+(add-hook 'text-mode-hook #'my/enable-text-wrapping)
+
+;; visual-fill-column performs extra window/display work.  Restrict it to the
+;; two document modes where the centered text column is actually useful.
 (use-package visual-fill-column
   :ensure t
-  :hook (visual-line-mode . visual-fill-column-mode)
+  :commands visual-fill-column-mode
+  :hook ((markdown-mode . visual-fill-column-mode)
+         (LaTeX-mode . visual-fill-column-mode))
   :custom
-  (visual-fill-column-width nil))
-(global-visual-wrap-prefix-mode 1)
-(setq-default visual-wrap-extra-indent 0)
-;; disable wrapping for pdf
-(defun my-disable-visual-wrapping-in-pdf ()
-  (when (derived-mode-p 'pdf-view-mode)
-    (visual-line-mode -1)
-    (when (bound-and-true-p visual-fill-column-mode)
-      (visual-fill-column-mode -1))
-    (when (bound-and-true-p visual-wrap-prefix-mode)
-      (visual-wrap-prefix-mode -1))))
-
-(add-hook 'after-change-major-mode-hook
-          #'my-disable-visual-wrapping-in-pdf
-          100)
+  (visual-fill-column-width 90))
 
 (use-package highlight-indent-guides
-  :hook (prog-mode . highlight-indent-guides-mode)
+  ;; Deliberately not enabled globally: it adds font-lock work and an idle
+  ;; timer to each enabled buffer.  Use M-x highlight-indent-guides-mode when
+  ;; needed.
+  :commands highlight-indent-guides-mode
+  :custom
+  (highlight-indent-guides-auto-enabled nil)
+  (highlight-indent-guides-method 'character)
+  (highlight-indent-guides-responsive nil)
   :config
-  (setq highlight-indent-guides-auto-enabled nil)
   (set-face-background 'highlight-indent-guides-odd-face "darkgray")
   (set-face-background 'highlight-indent-guides-even-face "dimgray")
   (set-face-foreground 'highlight-indent-guides-character-face "dimgray"))
@@ -226,7 +281,8 @@
   :hook (compilation-filter . ansi-color-compilation-filter))
 
 (use-package dumb-jump
-  :config
+  :commands dumb-jump-xref-activate
+  :init
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 
 (use-package pdf-tools
@@ -271,7 +327,8 @@
 (with-eval-after-load 'treesit
   (add-to-list
    'treesit-language-source-alist
-   '(typst "https://github.com/uben0/tree-sitter-typst")))
+   '(typst "https://github.com/uben0/tree-sitter-typst")
+   '(bash "https://github.com/tree-sitter/tree-sitter-bash" "v0.23.3")))
 
 (defalias 'japanese-change-line
   (kmacro "C-\\ % <return> C-\\"))
@@ -279,28 +336,35 @@
   (define-key LaTeX-mode-map (kbd "C-c p") 'japanese-change-line))
 
 (use-package mozc
-  :config
+  :defer t
+  :init
   (setq default-input-method "japanese-mozc"))
 (prefer-coding-system 'utf-8)
 
 (use-package markdown-mode
   :mode ("\\.md\\'" . gfm-mode)
   :hook (markdown-mode . auto-fill-mode)
-  :config
-  (setq markdown-command '("pandoc"
-                           "-f" "gfm+tex_math_dollars"
-                           "-t" "html" "--mathjax")
-        markdown-enable-wiki-links t
-        markdown-italic-underscore t
-        markdown-asymmetric-header t
-        markdown-make-gfm-checkboxes-buttons t
-        markdown-gfm-uppercase-checkbox t
-        markdown-enable-math t
-        markdown-content-type "application/xhtml+xml"
-        markdown-css-paths
-        '("https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown.min.css")
-        markdown-xhtml-header-content
-        "<style>
+  :custom
+  ;; Pandoc still produces MathJax-compatible \(...\)/\[...\] markup, but
+  ;; syntax highlighting is disabled in Pandoc to save CPU during live preview.
+  (markdown-command '("pandoc"
+                      "-f" "gfm+tex_math_dollars"
+                      "-t" "html"
+                      "--mathjax"
+                      "--no-highlight"))
+  (markdown-enable-wiki-links t)
+  (markdown-italic-underscore t)
+  (markdown-asymmetric-header t)
+  (markdown-make-gfm-checkboxes-buttons t)
+  (markdown-gfm-uppercase-checkbox t)
+  (markdown-enable-math t)
+  (markdown-enable-highlighting-syntax nil)
+  (markdown-wiki-link-fontify-missing nil)
+  (markdown-content-type "application/xhtml+xml")
+  (markdown-css-paths
+   '("https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown.min.css"))
+  (markdown-xhtml-header-content
+   "<style>
 body {
   box-sizing: border-box;
   max-width: 1200px;
@@ -317,12 +381,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 (elpaca (simple-httpd :host github :repo "skeeto/emacs-web-server"
                       :local-repo "emacs-web-server"))
+;; Avoid continuously growing *httpd* logging while live-previewing.
+(setq httpd-log-buffer nil)
 
 (use-package impatient-mode
-  :commands (impatient-mode)
+  :commands (impatient-mode imp-visit-buffer)
+  :custom
+  ;; Native impatient-mode debounce.  Pandoc now runs only after typing has
+  ;; been idle for this long instead of once per keypress.
+  (impatient-mode-delay 1)
   :config
   (defun markdown-filter-impatient-mode (buffer)
-    "Markdown filter for impatient-mode."
+    "Render BUFFER as lightweight Markdown HTML for impatient-mode."
     (princ
      (with-temp-buffer
        (let ((tmpname (buffer-name)))
@@ -333,25 +403,27 @@ document.addEventListener('DOMContentLoaded', () => {
 <title>Markdown Preview</title>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css'>
-<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css'>
 <style>
 .markdown-body { box-sizing: border-box; margin: 0 auto; max-width: 1200px; min-width: 200px; padding: 45px; }
 @media (max-width: 767px) { .markdown-body { padding: 15px; } }
 </style>
+<script>
+window.MathJax = { options: { enableMenu: false } };
+</script>
+<script defer src='https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js'></script>
 </head><body>
 <article class='markdown-body'>%s</article>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js'></script>
-<script>hljs.highlightAll();</script>
-<script src='https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js'></script>
 </body></html>"
                  (buffer-string))))
      (current-buffer)))
+
   (defun md-preview ()
-    "Preview current markdown buffer in browser."
+    "Preview current Markdown buffer in a browser."
     (interactive)
-    (impatient-mode)
-    (imp-set-user-filter 'markdown-filter-impatient-mode)
-    (httpd-start)
+    (impatient-mode 1)
+    (imp-set-user-filter #'markdown-filter-impatient-mode)
+    (unless (httpd-running-p)
+      (httpd-start))
     (imp-visit-buffer)))
 
 (use-package matlab-mode
@@ -388,8 +460,11 @@ document.addEventListener('DOMContentLoaded', () => {
                        "^https://www\\.reddit\\.com" "https://old.reddit.com" url)))))
 
 (defun eww-enable-visual-line-mode ()
-  "Enable visual-line-mode after EWW finishes rendering."
-  (run-at-time 0.1 nil #'visual-line-mode 1))
+  "Enable inexpensive visual wrapping after EWW finishes rendering."
+  (run-at-time 0.1 nil
+               (lambda ()
+                 (visual-line-mode 1)
+                 (visual-wrap-prefix-mode 1))))
 
 (add-hook 'eww-after-render-hook #'eww-redirect-reddit)
 (add-hook 'eww-after-render-hook #'eww-enable-visual-line-mode)
@@ -405,11 +480,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 (column-number-mode 1)
 (global-so-long-mode 1)
-(global-visual-line-mode t)
-(global-auto-revert-mode t)
+
+;; Use file notifications where available instead of frequent polling.
+(setq auto-revert-avoid-polling t
+      auto-revert-interval 5
+      auto-revert-check-vc-info nil)
+(global-auto-revert-mode 1)
+
 (delete-selection-mode 1)
 (electric-pair-mode 1)
-(pixel-scroll-precision-mode)
+
+;; Pixel-precision scrolling causes substantially more redisplay work on weak
+;; GPUs/CPUs.  Normal scrolling is deliberately retained.
+(when (bound-and-true-p pixel-scroll-precision-mode)
+  (pixel-scroll-precision-mode -1))
 
 (setq split-width-threshold nil)
 (setq-default indent-tabs-mode nil)
@@ -418,17 +502,17 @@ document.addEventListener('DOMContentLoaded', () => {
 (setq electric-pair-preserve-balance nil)
 (setq compilation-environment '("TERM=xterm-256color"))
 (setq ring-bell-function 'ignore)
+
+;; Relative numbers must be recomputed whenever point moves.  Absolute numbers
+;; are cheaper, and line numbers are restricted to ordinary editing buffers.
 (setq display-line-numbers-type 'relative)
-(defcustom my/display-line-numbers-exempt-modes '(pdf-view-mode)
-  "Major modes in which `display-line-numbers-mode' should stay off."
-  :type '(repeat symbol))
-(define-globalized-minor-mode my/global-display-line-numbers-mode
-  display-line-numbers-mode
-  (lambda ()
-    (unless (or (minibufferp)
-                (apply #'derived-mode-p my/display-line-numbers-exempt-modes))
-      (display-line-numbers-mode))))
-(my/global-display-line-numbers-mode)
+(defun my/maybe-enable-line-numbers ()
+  "Enable line numbers in normal editing buffers, except large files."
+  (when (and (< (buffer-size) (* 500 1024))
+             (not (minibufferp)))
+    (display-line-numbers-mode 1)))
+(add-hook 'prog-mode-hook #'my/maybe-enable-line-numbers)
+(add-hook 'text-mode-hook #'my/maybe-enable-line-numbers)
 
 ;; Temp/backup files
 (setq auto-save-file-name-transforms `((".*" "~/.emacs-saves/" t)))
@@ -490,3 +574,87 @@ document.addEventListener('DOMContentLoaded', () => {
   "Show the full path of the current file in the minibuffer."
   (interactive)
   (message (buffer-file-name)))
+
+;; slack
+(use-package slack
+  :bind (("C-c S K" . slack-stop)
+         ("C-c S c" . slack-select-rooms)
+         ("C-c S u" . slack-select-unread-rooms)
+         ("C-c S U" . slack-user-select)
+         ("C-c S s" . slack-search-from-messages)
+         ("C-c S J" . slack-jump-to-browser)
+         ("C-c S j" . slack-jump-to-app)
+         ("C-c S e" . slack-insert-emoji)
+         ("C-c S E" . slack-message-edit)
+         ("C-c S r" . slack-message-add-reaction)
+         ("C-c S t" . slack-thread-show-or-create)
+         ("C-c S g" . slack-message-redisplay)
+         ("C-c S G" . slack-conversations-list-update-quick)
+         ("C-c S q" . slack-quote-and-reply)
+         ("C-c S Q" . slack-quote-and-reply-with-link)
+         (:map slack-mode-map
+               (("@" . slack-message-embed-mention)
+                ("#" . slack-message-embed-channel)))
+         (:map slack-thread-message-buffer-mode-map
+               (("C-c '" . slack-message-write-another-buffer)
+                ("@" . slack-message-embed-mention)
+                ("#" . slack-message-embed-channel)))
+         (:map slack-message-buffer-mode-map
+               (("C-c '" . slack-message-write-another-buffer)))
+         (:map slack-message-compose-buffer-mode-map
+               (("C-c '" . slack-message-send-from-buffer)))
+         )
+  :custom
+  (slack-extra-subscribed-channels (mapcar 'intern (list "some-channel")))
+  :config
+  (slack-register-team
+     :name "nakaolab"
+     :token (getenv "SLACK_TOKEN")
+     :cookie (getenv "SLACK_COOKIE")
+     :full-and-display-names t
+     :default t
+     :subscribed-channels nil ;; using slack-extra-subscribed-channels because I can change it dynamically
+     ))
+
+(setq epg-pinentry-mode 'loopback)
+(use-package mu4e
+  :config
+  (setq mu4e-maildir "~/.mail/personal/"
+        mu4e-get-mail-command "mbsync personal"
+        mu4e-update-interval 300
+        mu4e-inbox-folder "/Inbox"
+        mu4e-sent-folder "/Sent"
+        mu4e-drafts-folder "/Draft"
+        mu4e-trash-folder "/Trash"
+        mu4e-refile-folder "/Junk"
+        mu4e-sent-messages-behavior 'sent
+        mu4e-compose-signature-include-separator nil
+        mu4e-compose-signature "Makihiro"
+        user-mail-address "makigo@aubsebian.net"
+        user-full-name "Makihiro GO")
+  (setq sendmail-program "msmtp"
+        send-mail-function #'sendmail-send-it
+        message-sendmail-f-is-evil t
+        message-sendmail-extra-arguments (list "--read-envelope-from" "-C" (expand-file-name "~/.config/msmtprc") "-a" "personal")        
+        message-send-mail-function #'message-send-mail-with-sendmail)
+  (defun sign-or-encrypt-message ()
+    (let ((answer (read-from-minibuffer "Sign or encrypt?\nEmpty to do nothing.\n[s/e]: ")))
+      (cond
+       ((string-equal answer "s") (progn
+                                    (message "Signing message.")
+                                    (mml-secure-message-sign-pgpmime)))
+       ((string-equal answer "e") (progn
+                                    (message "Encrypt and signing message.")
+                                    (mml-secure-message-encrypt-pgpmime)))
+       (t (progn
+            (message "Dont signing or encrypting message.")
+            nil)))))
+
+  (add-hook 'message-send-hook 'sign-or-encrypt-message))
+
+(setq empv-mpv-args '("--vo=x11" "--force-window=yes"))
+
+(use-package alert
+  :commands (alert)
+  :init
+  (setq alert-default-style 'notifier))
