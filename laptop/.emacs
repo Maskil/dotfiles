@@ -1,4 +1,4 @@
-(defvar my/gc-cons-threshold-after-startup (* 16 1024 1024))
+(defvar my/gc-cons-threshold-after-startup (* 64 1024 1024))
 (setq gc-cons-threshold (* 64 1024 1024)
       gc-cons-percentage 0.3)
 (add-hook 'emacs-startup-hook
@@ -19,7 +19,7 @@
        (build (expand-file-name "elpaca/" elpaca-builds-directory))
        (order (cdr elpaca-order))
        (default-directory repo))
-  (add-to-list 'load-path (if (file-exists-p build) build repo))
+  (add-to-list 'load-path (if (file-exists-p build) build re'po))
   (unless (file-exists-p repo)
     (make-directory repo t)
     (when (<= emacs-major-version 28) (require 'subr-x))
@@ -54,26 +54,50 @@
 (elpaca-wait)
 (setq use-package-always-ensure t)
 
-(use-package ef-themes :defer t)
+(use-package gruber-darker-theme :ensure t)
 (use-package dimmer :defer t)
 (when (eq system-type 'darwin)
   (setq shell-file-name "/opt/homebrew/bin/bash")
   (setq vterm-shell "/opt/homebrew/bin/bash"))
 (use-package vterm
   :commands vterm)
+
+;; Skip TRAMP's extra shell setup for long-lived remote agent/Git processes.
+;; This host must authenticate without an interactive password prompt.
+(with-eval-after-load 'tramp
+  (connection-local-set-profile-variables
+   'my/remote-direct-async
+   '((tramp-direct-async-process . t)))
+  (connection-local-set-profiles
+   '(:application tramp :machine "nakaolab")
+   'my/remote-direct-async)
+  ;; ACP needs a pipe: a remote terminal can echo requests into its replies.
+  (add-to-list 'tramp-connection-properties
+               (list (regexp-quote "/ssh:nakaolab:") "direct-async" t))
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+
 (use-package agent-shell
   :commands agent-shell
   :config
   (setq agent-shell-google-authentication
       (agent-shell-google-make-authentication
-       :api-key (getenv "SLACK_TOKEN")))
-  (add-to-list 'tramp-remote-path '"/home/nakaolab/.npm-global/bin")
-  (add-to-list 'tramp-remote-path '"/home/nakaolab/.nvm/versions/node/v24.18.0/bin/"))
+       :api-key '(getenv "GEMINI_API")))
+  (setq agent-shell-xai-acp-command
+        '("grok" "agent" "stdio"))  
+  (setq agent-shell-session-restore-verbosity 'last)
+  (setq agent-shell-text-file-capabilities nil))
 (use-package agent-shell-tramp
   :ensure (:host github :repo "junyi-hou/agent-shell-tramp")
   :after agent-shell
   :config
   (agent-shell-tramp-mode 1))
+(use-package agent-recall
+  :ensure t
+  :config
+  (setq agent-recall-search-paths nil
+        agent-recall-extra-transcript-dirs
+        '((:dir "/ssh:nakaolab:~/research-m1/.agent-shell/transcripts/"
+           :project "research-m1"))))
 
 (menu-bar-mode 0)
 (tool-bar-mode 0)
@@ -107,7 +131,7 @@
 (add-hook 'elpaca-after-init-hook
           (lambda ()
             (load custom-file 'noerror)
-            (load-theme 'ef-melissa-dark t)))
+            (load-theme 'gruber-darker t)))
 
 ;; EXWM
 (defun efs/exwm-update-class ()
@@ -116,7 +140,7 @@
   :config
   (setq exwm-workspace-number 4)
   (setopt exwm-workspace-index-map (lambda (i) (number-to-string (1+ i))))
-
+  
   ;; When window "class" updates, use it to set the buffer name
   (add-hook 'exwm-update-class-hook #'efs/exwm-update-class)
 
@@ -165,6 +189,35 @@
                     (number-sequence 1 4))))
   (exwm-wm-mode 1))
 
+(use-package exwm-randr
+  :after exwm
+  :config
+  (setq exwm-randr-workspace-monitor-plist
+        '(0  "LVGS-1" 1 "VGA-1" 2 "LVGS-1" 3 "VGA-1"))
+
+  (add-hook 'exwm-randr-screen-change-hook
+            #'my/exwm-monitor-change)
+
+  (exwm-randr-mode 1))
+
+(defvar my/exwm-randr-process nil)
+
+(defun my/exwm-monitor-change ()
+  "Apply the appropriate monitor profile."
+  (unless (process-live-p my/exwm-randr-process)
+    (setq my/exwm-randr-process
+          (make-process
+           :name "autorandr"
+           :command '("autorandr" "--change")
+           :noquery t
+           :sentinel
+           (lambda (process _event)
+             (when (memq (process-status process)
+                         '(exit signal))
+               (when (and (eq (process-status process) 'exit)
+                          (= (process-exit-status process) 0))
+                 (exwm-randr-refresh))))))))
+
 ;; ============================================================
 ;; Core packages
 ;; ============================================================
@@ -194,7 +247,10 @@
            :files (:defaults))
   :defer t)
 (use-package magit
-  :commands (magit-status magit-dispatch magit-file-dispatch))
+  :commands (magit-status magit-dispatch magit-file-dispatch)
+  :config
+  ;; Magit requires a PTY when staging hunks over TRAMP direct async.
+  (setq magit-tramp-pipe-stty-settings 'pty))
 
 (defun company-remove-dot-and-dotdot (candidates)
   "Remove `.` and `..` from COMPANY completion CANDIDATES."
@@ -325,10 +381,19 @@
 
 ;; typst
 (with-eval-after-load 'treesit
-  (add-to-list
-   'treesit-language-source-alist
-   '(typst "https://github.com/uben0/tree-sitter-typst")
-   '(bash "https://github.com/tree-sitter/tree-sitter-bash" "v0.23.3")))
+  (dolist (grammar
+           '((typst "https://github.com/uben0/tree-sitter-typst")
+             (bash "https://github.com/tree-sitter/tree-sitter-bash" "v0.23.3")
+             (c "https://github.com/tree-sitter/tree-sitter-c" "v0.23.6")
+             (cpp "https://github.com/tree-sitter/tree-sitter-cpp" "v0.23.4")))
+    (add-to-list 'treesit-language-source-alist grammar)))
+(use-package treesit
+  :ensure nil
+  :config
+  (setq major-mode-remap-alist
+        '((c-mode . c-ts-mode)
+          (c++-mode . c++-ts-mode)
+          (sh-mode . bash-ts-mode))))
 
 (defalias 'japanese-change-line
   (kmacro "C-\\ % <return> C-\\"))
@@ -526,15 +591,19 @@ window.MathJax = { options: { enableMenu: false } };
 ;; ============================================================
 (global-set-key (kbd "C-\\") 'toggle-input-method)
 (global-set-key (kbd "s-<up>") 'toggle-frame-maximized)
-;; (global-set-key (kbd "<C-prior>") #'previous-buffer)
-;; (global-set-key (kbd "C-{") #'previous-buffer)
-;; (global-set-key (kbd "<C-next>")  #'next-buffer)
-;; (global-set-key (kbd "C-}")  #'next-buffer)
+(global-set-key (kbd "<C-prior>") #'previous-buffer)
+(global-set-key (kbd "C-{") #'previous-buffer)
+(global-set-key (kbd "<C-next>")  #'next-buffer)
+(global-set-key (kbd "C-}")  #'next-buffer)
 (global-set-key (kbd "<f5>") 'compile)
 (global-set-key (kbd "<f6>") 'recompile)
 (global-set-key (kbd "<f7>") 'arduino-mode)
 (global-set-key (kbd "C-S-k") 'delete-line-no-kill)
 (global-set-key (kbd "<C-f1>") 'show-file-name)
+(global-set-key (kbd "s-p") #'enlarge-window)
+(global-set-key (kbd "s-n") #'shrink-window)
+(global-set-key (kbd "s-f") #'enlarge-window-horizontally)
+(global-set-key (kbd "s-b") #'shrink-window-horizontally)
 
 ;; ============================================================
 ;; Custom functions
@@ -604,17 +673,23 @@ window.MathJax = { options: { enableMenu: false } };
          (:map slack-message-compose-buffer-mode-map
                (("C-c '" . slack-message-send-from-buffer)))
          )
-  :custom
-  (slack-extra-subscribed-channels (mapcar 'intern (list "some-channel")))
   :config
   (slack-register-team
      :name "nakaolab"
-     :token (getenv "SLACK_TOKEN")
+     :token (getenv "SLACK_NAKAOLAB_TOKEN")
      :cookie (getenv "SLACK_COOKIE")
      :full-and-display-names t
      :default t
      :subscribed-channels nil ;; using slack-extra-subscribed-channels because I can change it dynamically
-     ))
+     )
+  (slack-register-team
+     :name "aubsebian"
+     :token (getenv "SLACK_AUBSEBIAN_TOKEN")
+     :cookie (getenv "SLACK_COOKIE")
+     :full-and-display-names t
+     :subscribed-channels nil ;; using slack-extra-subscribed-channels because I can change it dynamically
+     )
+  )
 
 (setq epg-pinentry-mode 'loopback)
 (use-package mu4e
@@ -636,7 +711,8 @@ window.MathJax = { options: { enableMenu: false } };
         send-mail-function #'sendmail-send-it
         message-sendmail-f-is-evil t
         message-sendmail-extra-arguments (list "--read-envelope-from" "-C" (expand-file-name "~/.config/msmtprc") "-a" "personal")        
-        message-send-mail-function #'message-send-mail-with-sendmail)
+        message-send-mail-function #'message-send-mail-with-sendmail
+        message-kill-buffer-on-exit t)
   (defun sign-or-encrypt-message ()
     (let ((answer (read-from-minibuffer "Sign or encrypt?\nEmpty to do nothing.\n[s/e]: ")))
       (cond
@@ -653,6 +729,15 @@ window.MathJax = { options: { enableMenu: false } };
   (add-hook 'message-send-hook 'sign-or-encrypt-message))
 
 (setq empv-mpv-args '("--vo=x11" "--force-window=yes"))
+
+(customize-set-variable
+ 'radio-stations-alist
+ '(("40s" . "http://uk3.internet-radio.com:8082/live.m3u")))
+
+(use-package radio :ensure t)
+(use-package listen :ensure t)
+(use-package empv
+  :ensure (:host github :repo "isamert/empv.el"))
 
 (use-package alert
   :commands (alert)

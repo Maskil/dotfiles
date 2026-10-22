@@ -7,9 +7,13 @@
  '(TeX-view-program-selection nil)
  '(battery-mode-line-format "[BTR %p%%] ")
  '(browse-url-epiphany-new-window-is-tab t)
+ '(compile-command "bash build.sh")
  '(custom-enabled-themes '(gruber-darker))
  '(custom-safe-themes
-   '("e13beeb34b932f309fb2c360a04a460821ca99fe58f69e65557d6c1b10ba18c7" default))
+   '("53b782ac9a6dec2f5e43844b8a7acfbbb133ff38a3ace2726d0eb2ad857f59dc"
+     "2e680da9a2a0a329587f900a84a739195e34122f708d804306ad3218306e5888"
+     "e27c9668d7eddf75373fa6b07475ae2d6892185f07ebed037eedf783318761d7"
+     "e13beeb34b932f309fb2c360a04a460821ca99fe58f69e65557d6c1b10ba18c7" default))
  '(display-battery-mode t)
  '(eww-auto-rename-buffer 'title)
  '(eww-browse-url-new-window-is-tab t)
