@@ -54,7 +54,7 @@
 (elpaca-wait)
 (setq use-package-always-ensure t)
 
-(use-package gruber-darker-theme :ensure t)
+(use-package gruber-darker-theme :demand t)
 (use-package dimmer :defer t)
 (when (eq system-type 'darwin)
   (setq shell-file-name "/opt/homebrew/bin/bash")
@@ -83,7 +83,7 @@
       (agent-shell-google-make-authentication
        :api-key '(getenv "GEMINI_API")))
   (setq agent-shell-xai-acp-command
-        '("grok" "agent" "stdio"))  
+        '("grok" "agent" "stdio"))
   (setq agent-shell-session-restore-verbosity 'last)
   (setq agent-shell-text-file-capabilities nil))
 (use-package agent-shell-tramp
@@ -91,13 +91,13 @@
   :after agent-shell
   :config
   (agent-shell-tramp-mode 1))
-(use-package agent-recall
-  :ensure t
-  :config
-  (setq agent-recall-search-paths nil
-        agent-recall-extra-transcript-dirs
-        '((:dir "/ssh:nakaolab:~/research-m1/.agent-shell/transcripts/"
-           :project "research-m1"))))
+;; (use-package agent-recall
+;;   :ensure t
+;;   :config
+;;   (setq agent-recall-search-paths nil
+;;         agent-recall-extra-transcript-dirs
+;;         '((:dir "/ssh:nakaolab:~/research-m1/.agent-shell/transcripts/"
+;;            :project "research-m1"))))
 
 (menu-bar-mode 0)
 (tool-bar-mode 0)
@@ -130,8 +130,7 @@
 
 (add-hook 'elpaca-after-init-hook
           (lambda ()
-            (load custom-file 'noerror)
-            (load-theme 'gruber-darker t)))
+            (load custom-file 'noerror)))
 
 ;; EXWM
 (defun efs/exwm-update-class ()
@@ -140,7 +139,7 @@
   :config
   (setq exwm-workspace-number 4)
   (setopt exwm-workspace-index-map (lambda (i) (number-to-string (1+ i))))
-  
+
   ;; When window "class" updates, use it to set the buffer name
   (add-hook 'exwm-update-class-hook #'efs/exwm-update-class)
 
@@ -710,7 +709,7 @@ window.MathJax = { options: { enableMenu: false } };
   (setq sendmail-program "msmtp"
         send-mail-function #'sendmail-send-it
         message-sendmail-f-is-evil t
-        message-sendmail-extra-arguments (list "--read-envelope-from" "-C" (expand-file-name "~/.config/msmtprc") "-a" "personal")        
+        message-sendmail-extra-arguments (list "--read-envelope-from" "-C" (expand-file-name "~/.config/msmtprc") "-a" "personal")
         message-send-mail-function #'message-send-mail-with-sendmail
         message-kill-buffer-on-exit t)
   (defun sign-or-encrypt-message ()

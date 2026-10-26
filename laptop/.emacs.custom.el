@@ -5,6 +5,7 @@
  ;; If there is more than one, they won't work right.
  '(TeX-engine 'luatex)
  '(TeX-view-program-selection nil)
+ '(agent-shell-session-list-page-limit 50)
  '(battery-mode-line-format "[BTR %p%%] ")
  '(browse-url-epiphany-new-window-is-tab t)
  '(compile-command "bash build.sh")
