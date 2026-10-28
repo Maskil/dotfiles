@@ -1,33 +1,39 @@
-(menu-bar-mode 0)
-(tool-bar-mode 0)
-(scroll-bar-mode 0)
-(setq inhibit-splash-screen t)
-(setq inhibit-startup-message t)
-(setenv "LANG" "en_US.UTF-8")
-(setenv "DICTIONARY" "en_US")
+(defvar my/gc-cons-threshold-after-startup (* 64 1024 1024))
+(setq gc-cons-threshold (* 64 1024 1024)
+      gc-cons-percentage 0.3)
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (setq gc-cons-threshold my/gc-cons-threshold-after-startup
+                  gc-cons-percentage 0.1)
+            (garbage-collect)))
+
+(setq custom-file (file-truename "~/.emacs.custom.el"))
+(unless (file-exists-p custom-file)
+  (with-temp-buffer (write-file custom-file)))
 
 (defvar elpaca-installer-version 0.12)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-sources-directory (expand-file-name "sources/" elpaca-directory))
 (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref "27c2889f66368bde12b4e243582e343ed9cb75e3" :depth 1 :inherit ignore
+                              :ref nil :depth 1 :inherit ignore
                               :files (:defaults "elpaca-test.el" (:exclude "extensions"))
                               :build (:not elpaca-activate)))
 (let* ((repo  (expand-file-name "elpaca/" elpaca-sources-directory))
        (build (expand-file-name "elpaca/" elpaca-builds-directory))
        (order (cdr elpaca-order))
        (default-directory repo))
-  (add-to-list 'load-path (if (file-exists-p build) build repo))
+  (add-to-list 'load-path (if (file-exists-p build) build re'po))
   (unless (file-exists-p repo)
     (make-directory repo t)
     (when (<= emacs-major-version 28) (require 'subr-x))
     (condition-case-unless-debug err
         (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-                  ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
-                                                  ,@(when-let* ((depth (plist-get order :depth)))
-                                                      (list (format "--depth=%d" depth) "--no-single-branch"))
-                                                  ,(plist-get order :repo) ,repo))))
+                  ((zerop (apply #'call-process
+                                 `("git" nil ,buffer t "clone"
+                                   ,@(when-let* ((depth (plist-get order :depth)))
+                                       (list (format "--depth=%d" depth) "--no-single-branch"))
+                                   ,(plist-get order :repo) ,repo))))
                   ((zerop (call-process "git" nil buffer t "checkout"
                                         (or (plist-get order :ref) "--"))))
                   (emacs (concat invocation-directory invocation-name))
@@ -46,61 +52,112 @@
 (elpaca `(,@elpaca-order))
 (setq elpaca-log-functions nil)
 
-(elpaca elpaca-use-package
-  ;; Enable use-package :ensure support for Elpaca.
-  (elpaca-use-package-mode))
+(elpaca elpaca-use-package (elpaca-use-package-mode))
+(elpaca gruber-darker-theme
+  (load-theme 'gruber-darker t))
+;; Activate the theme before loading Custom, then apply preferences before
+;; declaring the remaining packages.  Their defcustom forms use saved values.
+(elpaca-wait)
 (setq use-package-always-ensure t)
+(load custom-file 'noerror)
 
-(elpaca 'ef-themes)
-(elpaca dimmer)
+(use-package dimmer :defer t)
 (when (eq system-type 'darwin)
   (setq shell-file-name "/opt/homebrew/bin/bash")
   (setq vterm-shell "/opt/homebrew/bin/bash"))
-(elpaca vterm)
-(elpaca agent-shell)
+(use-package vterm
+  :commands vterm)
 
-;; Block until the queued packages above are installed,
-;; are installed, so the rest of the config can use use-package safely.
-(elpaca-wait)
+;; Skip TRAMP's extra shell setup for long-lived remote agent/Git processes.
+;; This host must authenticate without an interactive password prompt.
+(with-eval-after-load 'tramp
+  (connection-local-set-profile-variables
+   'my/remote-direct-async
+   '((tramp-direct-async-process . t)))
+  (connection-local-set-profiles
+   '(:application tramp :machine "nakaolab")
+   'my/remote-direct-async)
+  ;; ACP needs a pipe: a remote terminal can echo requests into its replies.
+  (add-to-list 'tramp-connection-properties
+               (list (regexp-quote "/ssh:nakaolab:") "direct-async" t))
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
-(load-theme 'ef-melissa-dark t)
+(use-package agent-shell
+  :commands agent-shell
+  :config
+  (setq agent-shell-google-authentication
+      (agent-shell-google-make-authentication
+       :api-key '(getenv "GEMINI_API"))))
+(use-package agent-shell-tramp
+  :ensure (:host github :repo "junyi-hou/agent-shell-tramp")
+  :after agent-shell
+  :config
+  (agent-shell-tramp-mode 1))
+
+(menu-bar-mode 0)
+(tool-bar-mode 0)
+(scroll-bar-mode 0)
+(setenv "LANG" "en_US.UTF-8")
+(setenv "DICTIONARY" "en_US")
+(blink-cursor-mode -1)
 
 (dolist (dir '("~/.emacs-saves" "~/.emacs.local"))
   (unless (file-exists-p dir)
     (make-directory dir t)))
 
-(unless (file-exists-p "~/.emacs.custom.el")
-  (with-temp-buffer (write-file "~/.emacs.custom.el")))
-
 (add-to-list 'load-path "~/.emacs.local/")
 
-(setq custom-file "~/.emacs.custom.el")
+(defvar my/exwm-randr-process nil)
+
+(defun my/exwm-monitor-change ()
+  "Apply the appropriate monitor profile."
+  (unless (process-live-p my/exwm-randr-process)
+    (setq my/exwm-randr-process
+          (make-process
+           :name "autorandr"
+           :command '("autorandr" "--change")
+           :noquery t
+           :sentinel
+           (lambda (process _event)
+             (when (memq (process-status process)
+                         '(exit signal))
+               (when (and (eq (process-status process) 'exit)
+                          (= (process-exit-status process) 0))
+                 (exwm-randr-refresh))))))))
 
 ;; ============================================================
 ;; Core packages
 ;; ============================================================
 
 (use-package exec-path-from-shell
+  ;; On Debian/EXWM the standard /usr/bin PATH is already available.  Avoid
+  ;; spawning a login shell unless Emacs is a daemon or runs on macOS.
+  :if (or (daemonp) (memq window-system '(mac ns)))
+  :defer 1
   :config
   (exec-path-from-shell-initialize))
+(dolist (line (process-lines "/bin/bash" "-c" "source ~/.bashrc >/dev/null 2>&1; env"))
+  (when (string-match "\\`\\([^=]+\\)=\\(.*\\)\\'" line)
+    (setenv (match-string 1 line) (match-string 2 line))))
 
 (use-package flycheck
   :commands flycheck-mode)
 
 (use-package compat
   :ensure (:repo "https://github.com/emacs-compat/compat.git"
-           :files (:defaults "compat-*.el")))
-(use-package llama)
+           :files (:defaults "compat-*.el"))
+  :defer t)
+(use-package llama
+  :defer t)
 (use-package transient
   :ensure (:repo "https://github.com/magit/transient.git"
-           :files (:defaults)))
-(use-package magit)
-
-(use-package company
+           :files (:defaults))
+  :defer t)
+(use-package magit
+  :commands (magit-status magit-dispatch magit-file-dispatch)
   :config
-  (global-company-mode)
-  (setq company-idle-delay 0)
-  (setq company-transformers '(company-remove-dot-and-dotdot)))
+  ;; Magit requires a PTY when staging hunks over TRAMP direct async.
+  (setq magit-tramp-pipe-stty-settings 'pty))
 
 (defun company-remove-dot-and-dotdot (candidates)
   "Remove `.` and `..` from COMPANY completion CANDIDATES."
@@ -109,11 +166,21 @@
                     (string-equal candidate "../")))
               candidates))
 
+(use-package company
+  ;; Do not run completion machinery in every special/internal buffer.
+  :hook ((prog-mode . company-mode)
+         (text-mode . company-mode)))
+
+(defun my/python-company-jedi-setup ()
+  "Enable Jedi completion only in Python buffers."
+  (require 'company-jedi)
+  (jedi:setup)
+  (setq-local company-backends
+              (cons 'company-jedi (remove 'company-jedi company-backends))))
+
 (use-package company-jedi
-  :after company
-  :config
-  (add-to-list 'company-backends 'company-jedi)
-  (add-hook 'python-mode-hook 'jedi:setup))
+  :commands company-jedi
+  :hook (python-mode . my/python-company-jedi-setup))
 
 (use-package multiple-cursors
   :bind (("C-S-c C-S-c" . mc/edit-lines)
@@ -126,39 +193,33 @@
          ("C-c C-c M-x" . execute-extended-command)))
 
 (use-package ido-completing-read+
+  :defer 1
   :config
   (ido-ubiquitous-mode 1))
 
 (setq-default auto-fill-function nil)
-(global-visual-line-mode 1)
-(setq-default word-wrap-by-category t)
 (require 'kinsoku)
+
+;; Visual wrapping is useful for prose, but expensive when enabled globally.
+(defun my/enable-text-wrapping ()
+  (visual-line-mode 1)
+  (visual-wrap-prefix-mode 1))
+(add-hook 'text-mode-hook #'my/enable-text-wrapping)
+
+;; visual-fill-column performs extra window/display work.  Restrict it to the
+;; two document modes where the centered text column is actually useful.
 (use-package visual-fill-column
   :ensure t
-  :hook (visual-line-mode . visual-fill-column-mode)
-  :custom
-  (visual-fill-column-width nil))
-(global-visual-wrap-prefix-mode 1)
-(setq-default visual-wrap-extra-indent 0)
-;; disable wrapping for pdf
-(defun my-disable-visual-wrapping-in-pdf ()
-  (when (derived-mode-p 'pdf-view-mode)
-    (visual-line-mode -1)
-
-    (when (bound-and-true-p visual-fill-column-mode)
-      (visual-fill-column-mode -1))
-
-    (when (bound-and-true-p visual-wrap-prefix-mode)
-      (visual-wrap-prefix-mode -1))))
-
-(add-hook 'after-change-major-mode-hook
-          #'my-disable-visual-wrapping-in-pdf
-          100)
+  :commands visual-fill-column-mode
+  :hook ((markdown-mode . visual-fill-column-mode)
+         (LaTeX-mode . visual-fill-column-mode)))
 
 (use-package highlight-indent-guides
-  :hook (prog-mode . highlight-indent-guides-mode)
+  ;; Deliberately not enabled globally: it adds font-lock work and an idle
+  ;; timer to each enabled buffer.  Use M-x highlight-indent-guides-mode when
+  ;; needed.
+  :commands highlight-indent-guides-mode
   :config
-  (setq highlight-indent-guides-auto-enabled nil)
   (set-face-background 'highlight-indent-guides-odd-face "darkgray")
   (set-face-background 'highlight-indent-guides-even-face "dimgray")
   (set-face-foreground 'highlight-indent-guides-character-face "dimgray"))
@@ -168,7 +229,8 @@
   :hook (compilation-filter . ansi-color-compilation-filter))
 
 (use-package dumb-jump
-  :config
+  :commands dumb-jump-xref-activate
+  :init
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 
 (use-package pdf-tools
@@ -193,27 +255,30 @@
          (LaTeX-mode . turn-on-reftex)
          (LaTeX-mode . (lambda () (setq-local fill-column 100)))
          (TeX-after-compilation-finished-functions . TeX-revert-document-buffer))
-  :custom
-  (TeX-parse-self t)
-  (font-latex-fontify-script nil)
-  (font-latex-fontify-sectioning 'color)
-  (reftex-plug-into-AUCTeX t)
   :config
-  (setq-default TeX-master nil)
   (fset 'tex-font-lock-suscript #'ignore))
 
 ;; --- make C-c C-a use latexmk, letting latexmkrc pick the engine ---
 (with-eval-after-load 'tex
   (add-to-list 'TeX-command-list
                '("LatexMk" "latexmk %t" TeX-run-TeX nil t
-                 :help "Run latexmk; engine & pdf-mode come from latexmkrc"))
-  (setq-default TeX-command-default "LatexMk"))
+                 :help "Run latexmk; engine & pdf-mode come from latexmkrc")))
 
 ;; typst
 (with-eval-after-load 'treesit
-  (add-to-list
-   'treesit-language-source-alist
-   '(typst "https://github.com/uben0/tree-sitter-typst")))
+  (dolist (grammar
+           '((typst "https://github.com/uben0/tree-sitter-typst")
+             (bash "https://github.com/tree-sitter/tree-sitter-bash" "v0.23.3")
+             (c "https://github.com/tree-sitter/tree-sitter-c" "v0.23.6")
+             (cpp "https://github.com/tree-sitter/tree-sitter-cpp" "v0.23.4")))
+    (add-to-list 'treesit-language-source-alist grammar)))
+(use-package treesit
+  :ensure nil
+  :config
+  (setq major-mode-remap-alist
+        '((c-mode . c-ts-mode)
+          (c++-mode . c++-ts-mode)
+          (sh-mode . bash-ts-mode))))
 
 (defalias 'japanese-change-line
   (kmacro "C-\\ % <return> C-\\"))
@@ -221,47 +286,21 @@
   (define-key LaTeX-mode-map (kbd "C-c p") 'japanese-change-line))
 
 (use-package mozc
-  :config
-  (setq default-input-method "japanese-mozc"))
+  :defer t)
 (prefer-coding-system 'utf-8)
 
 (use-package markdown-mode
   :mode ("\\.md\\'" . gfm-mode)
-  :hook (markdown-mode . auto-fill-mode)
-  :config
-  (setq markdown-enable-wiki-links t
-        markdown-italic-underscore t
-        markdown-asymmetric-header t
-        markdown-make-gfm-checkboxes-buttons t
-        markdown-gfm-uppercase-checkbox t
-        markdown-enable-math t
-        markdown-content-type "application/xhtml+xml"
-        markdown-css-paths
-        '("https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown.min.css")
-        markdown-xhtml-header-content
-        "<style>
-body {
-  box-sizing: border-box;
-  max-width: 1200px;
-  width: 100%;
-  margin: 40px auto;
-  padding: 0 10px;
-}
-</style>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  document.body.classList.add('markdown-body');
-});
-</script>"))
+  :hook (markdown-mode . auto-fill-mode))
 
 (elpaca (simple-httpd :host github :repo "skeeto/emacs-web-server"
                       :local-repo "emacs-web-server"))
 
 (use-package impatient-mode
-  :commands (impatient-mode)
+  :commands (impatient-mode imp-visit-buffer)
   :config
   (defun markdown-filter-impatient-mode (buffer)
-    "Markdown filter for impatient-mode."
+    "Render BUFFER as lightweight Markdown HTML for impatient-mode."
     (princ
      (with-temp-buffer
        (let ((tmpname (buffer-name)))
@@ -272,78 +311,28 @@ document.addEventListener('DOMContentLoaded', () => {
 <title>Markdown Preview</title>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css'>
-<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css'>
 <style>
 .markdown-body { box-sizing: border-box; margin: 0 auto; max-width: 1200px; min-width: 200px; padding: 45px; }
 @media (max-width: 767px) { .markdown-body { padding: 15px; } }
 </style>
+<script>
+window.MathJax = { options: { enableMenu: false } };
+</script>
+<script defer src='https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js'></script>
 </head><body>
 <article class='markdown-body'>%s</article>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js'></script>
-<script>hljs.highlightAll();</script>
 </body></html>"
                  (buffer-string))))
      (current-buffer)))
+
   (defun md-preview ()
-    "Preview current markdown buffer in browser."
+    "Preview current Markdown buffer in a browser."
     (interactive)
-    (impatient-mode)
-    (imp-set-user-filter 'markdown-filter-impatient-mode)
-    (httpd-start)
+    (impatient-mode 1)
+    (imp-set-user-filter #'markdown-filter-impatient-mode)
+    (unless (httpd-running-p)
+      (httpd-start))
     (imp-visit-buffer)))
-
-;; --- Make the Claude Code vterm window scrollable --------------------------
-;;
-;; Root cause: Claude Code's default TUI renderer draws on the terminal's
-;; *alternate screen* (it emits ESC[?1049h -- verified against the running
-;; CLI).  The alternate screen has no scrollback, so the vterm buffer only ever
-;; holds the current screenful and there is literally nothing above to scroll
-;; to.  (The `vterm-scroll-to-bottom-on-output' the package sets does not exist
-;; in upstream emacs-libvterm, so it is a no-op and unrelated.)
-;;
-;; Fix 1 -- the real one: force Claude's classic main-screen renderer for
-;; sessions launched from Emacs, so finished output flows into vterm's
-;; scrollback and the window becomes scrollable.  Equivalent to setting
-;; "tui": "default" in ~/.claude/settings.json, but scoped to Emacs.  Only
-;; affects NEW Claude sessions -- restart any session that is already running.
-(setenv "CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN" "1")
-
-;; Fix 2 -- refinement: with the classic renderer, vterm still follows the
-;; cursor on every repaint, so scrolling up *while Claude is streaming* would
-;; snap you back to the bottom.  Preserve the scroll position of any Claude
-;; window you have scrolled away from the bottom; scroll back down to resume
-;; live following.  (vterm's built-in alternative is `vterm-copy-mode' /
-;; C-c C-t.)
-(defun my/claude-vterm-keep-scroll-position (orig-fun buffer)
-  "Around advice for `vterm--delayed-redraw' preserving Claude scroll position.
-ORIG-FUN is `vterm--delayed-redraw'; BUFFER is the vterm buffer it redraws."
-  (if (not (and (buffer-live-p buffer)
-                (string-prefix-p "*claude-code" (buffer-name buffer))))
-      (funcall orig-fun buffer)
-    (let (saved)
-      (with-current-buffer buffer
-        (unless (bound-and-true-p vterm-copy-mode)
-          (dolist (win (get-buffer-window-list buffer nil t))
-            ;; PARTIALLY = t so a partially-visible last line still counts as
-            ;; "at the bottom" and never freezes live following by accident.
-            (unless (pos-visible-in-window-p (point-max) win t)
-              (push (list win
-                          (copy-marker (window-start win))
-                          (copy-marker (window-point win)))
-                    saved)))))
-      (unwind-protect
-          (funcall orig-fun buffer)
-        (dolist (entry saved)
-          (pcase-let ((`(,win ,start ,pt) entry))
-            (when (window-live-p win)
-              (set-window-point win (marker-position pt))
-              (set-window-start win (marker-position start) t))
-            (set-marker start nil)
-            (set-marker pt nil)))))))
-
-(with-eval-after-load 'vterm
-  (advice-add 'vterm--delayed-redraw :around
-              #'my/claude-vterm-keep-scroll-position))
 
 (use-package matlab-mode
   :mode ("\\.m\\'" . matlab-mode))
@@ -351,7 +340,7 @@ ORIG-FUN is `vterm--delayed-redraw'; BUFFER is the vterm buffer it redraws."
 (defun my-configure-font (frame)
   "Configure font for FRAME (works with daemon and non-daemon)."
   (with-selected-frame frame
-    (set-face-attribute 'default nil :font "Sarasa Mono J" :height 155)
+    (set-face-attribute 'default nil :font "Sarasa Mono J" :height 165)
     (set-fontset-font "fontset-default" 'han "Sarasa Mono J")))
 
 (if (daemonp)
@@ -379,8 +368,11 @@ ORIG-FUN is `vterm--delayed-redraw'; BUFFER is the vterm buffer it redraws."
                        "^https://www\\.reddit\\.com" "https://old.reddit.com" url)))))
 
 (defun eww-enable-visual-line-mode ()
-  "Enable visual-line-mode after EWW finishes rendering."
-  (run-at-time 0.1 nil #'visual-line-mode 1))
+  "Enable inexpensive visual wrapping after EWW finishes rendering."
+  (run-at-time 0.1 nil
+               (lambda ()
+                 (visual-line-mode 1)
+                 (visual-wrap-prefix-mode 1))))
 
 (add-hook 'eww-after-render-hook #'eww-redirect-reddit)
 (add-hook 'eww-after-render-hook #'eww-enable-visual-line-mode)
@@ -396,34 +388,26 @@ ORIG-FUN is `vterm--delayed-redraw'; BUFFER is the vterm buffer it redraws."
 
 (column-number-mode 1)
 (global-so-long-mode 1)
-(global-visual-line-mode t)
-(global-auto-revert-mode t)
+
+(global-auto-revert-mode 1)
+
 (delete-selection-mode 1)
 (electric-pair-mode 1)
-(pixel-scroll-precision-mode)
 
-(setq split-width-threshold nil)
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 2)
-(setq kill-whole-line t)
-(setq electric-pair-preserve-balance nil)
-(setq compilation-environment '("TERM=xterm-256color"))
-(setq ring-bell-function 'ignore)
-(setq display-line-numbers-type 'relative)
-(defcustom my/display-line-numbers-exempt-modes '(pdf-view-mode)
-  "Major modes in which `display-line-numbers-mode' should stay off."
-  :type '(repeat symbol))
-(define-globalized-minor-mode my/global-display-line-numbers-mode
-  display-line-numbers-mode
-  (lambda ()
-    (unless (or (minibufferp)
-                (apply #'derived-mode-p my/display-line-numbers-exempt-modes))
-      (display-line-numbers-mode))))
-(my/global-display-line-numbers-mode)
+;; Pixel-precision scrolling causes substantially more redisplay work on weak
+;; GPUs/CPUs.  Normal scrolling is deliberately retained.
+(when (bound-and-true-p pixel-scroll-precision-mode)
+  (pixel-scroll-precision-mode -1))
 
-;; Temp/backup files
-(setq auto-save-file-name-transforms `((".*" "~/.emacs-saves/" t)))
-(setq backup-directory-alist '((".*" . "~/.emacs-saves")))
+;; Relative numbers must be recomputed whenever point moves.  Absolute numbers
+;; are cheaper, and line numbers are restricted to ordinary editing buffers.
+(defun my/maybe-enable-line-numbers ()
+  "Enable line numbers in normal editing buffers, except large files."
+  (when (and (< (buffer-size) (* 500 1024))
+             (not (minibufferp)))
+    (display-line-numbers-mode 1)))
+(add-hook 'prog-mode-hook #'my/maybe-enable-line-numbers)
+(add-hook 'text-mode-hook #'my/maybe-enable-line-numbers)
 
 ;; Compilation
 (add-to-list 'same-window-buffer-names "*compilation*")
@@ -442,6 +426,10 @@ ORIG-FUN is `vterm--delayed-redraw'; BUFFER is the vterm buffer it redraws."
 (global-set-key (kbd "<f7>") 'arduino-mode)
 (global-set-key (kbd "C-S-k") 'delete-line-no-kill)
 (global-set-key (kbd "<C-f1>") 'show-file-name)
+(global-set-key (kbd "s-p") #'enlarge-window)
+(global-set-key (kbd "s-n") #'shrink-window)
+(global-set-key (kbd "s-f") #'enlarge-window-horizontally)
+(global-set-key (kbd "s-b") #'shrink-window-horizontally)
 
 ;; ============================================================
 ;; Custom functions
@@ -482,4 +470,26 @@ ORIG-FUN is `vterm--delayed-redraw'; BUFFER is the vterm buffer it redraws."
   (interactive)
   (message (buffer-file-name)))
 
-(load custom-file 'noerror)
+(use-package mu4e
+  :config
+  (defun sign-or-encrypt-message ()
+    (let ((answer (read-from-minibuffer "Sign or encrypt?\nEmpty to do nothing.\n[s/e]: ")))
+      (cond
+       ((string-equal answer "s") (progn
+                                    (message "Signing message.")
+                                    (mml-secure-message-sign-pgpmime)))
+       ((string-equal answer "e") (progn
+                                    (message "Encrypt and signing message.")
+                                    (mml-secure-message-encrypt-pgpmime)))
+       (t (progn
+            (message "Dont signing or encrypting message.")
+            nil)))))
+
+  (add-hook 'message-send-hook 'sign-or-encrypt-message))
+
+(use-package radio :ensure t)
+(use-package empv
+  :ensure (:host github :repo "isamert/empv.el"))
+
+(use-package alert
+  :commands (alert))
